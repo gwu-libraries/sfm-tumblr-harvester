@@ -1,0 +1,34 @@
+sfmrabbit:
+    image: rabbitmq@sha256:a5180a37b0baebb938ee9d12dd11eed64a909288d7f344e24771278f8a122367
+    ports:
+        - "15672:15672"
+    restart: always
+    environment:
+        - TZ=America/New_York
+        - RABBITMQ_DEFAULT_USER=sfm_user
+        - RABBITMQ_DEFAULT_PASS=password
+sfmtumblrharvester:
+    image: gwul/sfm-tumblr-harvester:dev
+    links:
+        - sfmrabbit:mq
+    volumes:
+        - "..:/opt/sfm-tumblr-harvester"
+        - "../../sfm-utils:/opt/sfm-utils"
+        - "../../warcprox:/opt/warcprox"
+    environment:
+        - TZ=America/New_York
+        - DEBUG=True
+#    restart: always
+
+sfmtumblrexporter:
+    image: gwul/sfm-tumblr-exporter:dev
+    links:
+        - sfmrabbit:mq
+    volumes:
+        - "..:/opt/sfm-tumblr-harvester"
+        - "../../sfm-utils:/opt/sfm-utils"
+        - "../../warcprox:/opt/warcprox"
+    environment:
+        - TZ=America/New_York
+        - DEBUG=True
+#    restart: always
