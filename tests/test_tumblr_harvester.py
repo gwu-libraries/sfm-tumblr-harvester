@@ -1,6 +1,3 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-
 from __future__ import absolute_import
 import tests
 import vcr as base_vcr
@@ -35,7 +32,7 @@ class TestTumblrHarvesterVCR(tests.TestCase):
         self.harvester.message = {
             "id": "test:1",
             "type": "tumblr_user_timeline",
-            "path": self.path,
+            "path": "/collections/test_collection_set/collection_id",
             "seeds": [
                 {
                     "token": "codingjester"
@@ -54,25 +51,27 @@ class TestTumblrHarvesterVCR(tests.TestCase):
             }
         }
 
-    @vcr.use_cassette(filter_query_parameters=['api_key'])
+    @vcr.use_cassette(filter_query_parameters=['api_key','oauth_body_hash','oauth_nonce','oauth_timestamp',
+                                               'oauth_consumer_key','oauth_token','oauth_signature'])
     def test_search_vcr(self):
         self.harvester.harvest_seeds()
         # check the total number, for new users don't how to check
-        self.assertEqual(self.harvester.harvest_result.stats_summary()["posts"], 2134)
+        self.assertEqual(self.harvester.harvest_result.stats_summary()["posts"], 20)
         # check the harvester status
         self.assertTrue(self.harvester.harvest_result.success)
 
-    @vcr.use_cassette(filter_query_parameters=['api_key'])
+    @vcr.use_cassette(filter_query_parameters=['api_key','oauth_body_hash','oauth_nonce','oauth_timestamp',
+                                               'oauth_consumer_key','oauth_token','oauth_signature'])
     def test_incremental_search_vcr(self):
         self.harvester.message["options"]["incremental"] = True
-        host_name = self.harvester.message["seeds"]["token"]
+        host_name = self.harvester.message["seeds"][0]["token"]
         self.harvester.state_store.set_state("tumblr_harvester", "{}.offset".format(host_name), 20)
         self.harvester.harvest_seeds()
 
         # Check harvest result
         self.assertTrue(self.harvester.harvest_result.success)
         # for check the number of get
-        self.assertEqual(self.harvester.harvest_result.stats_summary()["posts"], 2134)
+        self.assertEqual(self.harvester.harvest_result.stats_summary()["posts"], 2114)
         # check the state
         self.assertEqual(2134, self.harvester.state_store.get_state("tumblr_harvester", "{}.offset".format(host_name)))
 
@@ -102,16 +101,16 @@ class TestTumblrHarvesterIntegration(tests.TestCase):
             tumblr_harvester_queue(connection).declare()
             tumblr_harvester_queue(connection).purge()
 
-        self.path = tempfile.mkdtemp()
+        self.harvest_path = tempfile.mkdtemp()
 
     def tearDown(self):
-        shutil.rmtree(self.path, ignore_errors=True)
+        shutil.rmtree(self.harvest_path, ignore_errors=True)
 
     def test_search(self):
         harvest_msg = {
             "id": "test:1",
             "type": "tumblr_user_timeline",
-            "path": self.path,
+            "path": self.harvest_path,
             "seeds": [
                 {
                     "token": "codingjester"
@@ -149,7 +148,7 @@ class TestTumblrHarvesterIntegration(tests.TestCase):
             self.assertEqual("test:1", result_msg["id"])
             # Success
             self.assertEqual("completed success", result_msg["status"])
-            # Some weibo posts
+            # Some posts
             self.assertTrue(result_msg["stats"][date.today().isoformat()]["posts"])
 
             # Web harvest message.

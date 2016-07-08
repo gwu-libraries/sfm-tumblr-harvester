@@ -11,14 +11,14 @@ post1={
         "reblog_key": "d6u1qMKq",
         "tags": [],
         "short_url": "https://tmblr.co/Z9Yjvx27puNjv",
-        "summary": "“Epic Death”\n Miguel Co\n Blog\n Etsy",
+        "summary": "Epic Death\n Miguel Co\n Blog\n Etsy",
         "recommended_source": None,
         "recommended_color": None,
         "highlighted": [],
         "note_count": 730,
-        "caption": "<p><a class=\"tumblr_blog\" href=\"http://eatsleepdraw.tumblr.com/post/145789411872\" target=\"_blank\">eatsleepdraw</a>:</p>\n<blockquote>\n<p>“Epic Death”</p>\n<p><a href=\"http://www.miguelcoart.com\" title=\"website\" target=\"_blank\">Miguel Co</a></p>\n<p><a href=\"http://www.phillyphilippino.tumblr.com\" title=\"Blog\" target=\"_blank\">Blog</a></p>\n<p><a href=\"http://www.etsy.com/shop/miguelcoillustration\" title=\"Etsy\" target=\"_blank\">Etsy</a></p>\n</blockquote>",
+        "caption": "<p><a class=\"tumblr_blog\" href=\"http://eatsleepdraw.tumblr.com/post/145789411872\" target=\"_blank\">eatsleepdraw</a>:</p>\n<blockquote>\n<p>Epic Death</p>\n<p><a href=\"http://www.miguelcoart.com\" title=\"website\" target=\"_blank\">Miguel Co</a></p>\n<p><a href=\"http://www.phillyphilippino.tumblr.com\" title=\"Blog\" target=\"_blank\">Blog</a></p>\n<p><a href=\"http://www.etsy.com/shop/miguelcoillustration\" title=\"Etsy\" target=\"_blank\">Etsy</a></p>\n</blockquote>",
         "reblog": {
-          "tree_html": "<p><a class=\"tumblr_blog\" href=\"http://eatsleepdraw.tumblr.com/post/145789411872\" target=\"_blank\">eatsleepdraw</a>:</p><blockquote>\n<p>“Epic Death”</p>\n<p><a href=\"http://www.miguelcoart.com\" title=\"website\" target=\"_blank\">Miguel Co</a></p>\n<p><a href=\"http://www.phillyphilippino.tumblr.com\" title=\"Blog\" target=\"_blank\">Blog</a></p>\n<p><a href=\"http://www.etsy.com/shop/miguelcoillustration\" title=\"Etsy\" target=\"_blank\">Etsy</a></p>\n</blockquote>",
+          "tree_html": "<p><a class=\"tumblr_blog\" href=\"http://eatsleepdraw.tumblr.com/post/145789411872\" target=\"_blank\">eatsleepdraw</a>:</p><blockquote>\n<p>Epic Death</p>\n<p><a href=\"http://www.miguelcoart.com\" title=\"website\" target=\"_blank\">Miguel Co</a></p>\n<p><a href=\"http://www.phillyphilippino.tumblr.com\" title=\"Blog\" target=\"_blank\">Blog</a></p>\n<p><a href=\"http://www.etsy.com/shop/miguelcoillustration\" title=\"Etsy\" target=\"_blank\">Etsy</a></p>\n</blockquote>",
           "comment": ""
         },
         "trail": [
@@ -54,8 +54,8 @@ post1={
             "post": {
               "id": "145789411872"
             },
-            "content_raw": "<p>“Epic Death”</p>\n<p><a href=\"http://www.miguelcoart.com\" title=\"website\" target=\"_blank\">Miguel Co</a></p>\n<p><a href=\"http://www.phillyphilippino.tumblr.com\" title=\"Blog\" target=\"_blank\">Blog</a></p>\n<p><a href=\"http://www.etsy.com/shop/miguelcoillustration\" title=\"Etsy\" target=\"_blank\">Etsy</a></p>",
-            "content": "<p>“Epic Death”</p>\n<p><a href=\"http://www.miguelcoart.com\" title=\"website\" target=\"_blank\">Miguel Co</a></p>\n<p><a href=\"http://www.phillyphilippino.tumblr.com\" title=\"Blog\" target=\"_blank\">Blog</a></p>\n<p><a href=\"http://www.etsy.com/shop/miguelcoillustration\" title=\"Etsy\" target=\"_blank\">Etsy</a></p>",
+            "content_raw": "<p>Epic Death</p>\n<p><a href=\"http://www.miguelcoart.com\" title=\"website\" target=\"_blank\">Miguel Co</a></p>\n<p><a href=\"http://www.phillyphilippino.tumblr.com\" title=\"Blog\" target=\"_blank\">Blog</a></p>\n<p><a href=\"http://www.etsy.com/shop/miguelcoillustration\" title=\"Etsy\" target=\"_blank\">Etsy</a></p>",
+            "content": "<p>Epic Death</p>\n<p><a href=\"http://www.miguelcoart.com\" title=\"website\" target=\"_blank\">Miguel Co</a></p>\n<p><a href=\"http://www.phillyphilippino.tumblr.com\" title=\"Blog\" target=\"_blank\">Blog</a></p>\n<p><a href=\"http://www.etsy.com/shop/miguelcoillustration\" title=\"Etsy\" target=\"_blank\">Etsy</a></p>",
             "is_root_item": True
           }
         ],
