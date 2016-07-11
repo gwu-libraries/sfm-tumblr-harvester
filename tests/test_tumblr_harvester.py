@@ -56,7 +56,7 @@ class TestTumblrHarvesterVCR(tests.TestCase):
     def test_search_vcr(self):
         self.harvester.harvest_seeds()
         # check the total number, for new users don't how to check
-        self.assertEqual(self.harvester.harvest_result.stats_summary()["posts"], 20)
+        self.assertEqual(self.harvester.harvest_result.stats_summary()["tbposts"], 50)
         # check the harvester status
         self.assertTrue(self.harvester.harvest_result.success)
 
@@ -65,15 +65,15 @@ class TestTumblrHarvesterVCR(tests.TestCase):
     def test_incremental_search_vcr(self):
         self.harvester.message["options"]["incremental"] = True
         host_name = self.harvester.message["seeds"][0]["token"]
-        self.harvester.state_store.set_state("tumblr_harvester", "{}.offset".format(host_name), 20)
+        self.harvester.state_store.set_state("tumblr_harvester", "{}.last_post".format(host_name), 20)
         self.harvester.harvest_seeds()
 
         # Check harvest result
         self.assertTrue(self.harvester.harvest_result.success)
         # for check the number of get
-        self.assertEqual(self.harvester.harvest_result.stats_summary()["posts"], 2114)
+        self.assertEqual(self.harvester.harvest_result.stats_summary()["tbposts"], 2114)
         # check the state
-        self.assertEqual(2134, self.harvester.state_store.get_state("tumblr_harvester", "{}.offset".format(host_name)))
+        self.assertEqual(2134, self.harvester.state_store.get_state("tumblr_harvester", "{}.last_post".format(host_name)))
 
 
 @unittest.skipIf(not tests.test_config_available, "Skipping test since test config not available.")
@@ -113,7 +113,7 @@ class TestTumblrHarvesterIntegration(tests.TestCase):
             "path": self.harvest_path,
             "seeds": [
                 {
-                    "token": "codingjester"
+                    "token": "gwuscrc"
                 }
             ],
             "credentials": {
@@ -149,16 +149,13 @@ class TestTumblrHarvesterIntegration(tests.TestCase):
             # Success
             self.assertEqual("completed success", result_msg["status"])
             # Some posts
-            self.assertTrue(result_msg["stats"][date.today().isoformat()]["posts"])
+            self.assertTrue(result_msg["stats"][date.today().isoformat()]["tbposts"])
 
             # Web harvest message.
             bound_web_harvest_queue = self.web_harvest_queue(connection)
             message_obj = bound_web_harvest_queue.get(no_ack=True)
             # the default value is not harvesting web resources.
-            self.assertIsNotNone(message_obj, "No web harvest message.")
-            web_harvest_msg = message_obj.payload
-            # Some seeds
-            self.assertTrue(len(web_harvest_msg["seeds"]))
+            self.assertIsNone(message_obj)
 
             # Warc created message.
             bound_warc_created_queue = self.warc_created_queue(connection)

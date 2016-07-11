@@ -1,7 +1,7 @@
 from __future__ import absolute_import
 import logging
 from sfmutils.harvester import BaseHarvester
-import pytumblr
+from tumblrarc import Tumblrarc
 import time
 
 log = logging.getLogger(__name__)
@@ -40,50 +40,17 @@ class TumblrHarvester(BaseHarvester):
         log.info("Harvesting user %s. Incremental is %s.", host_name, incremental)
         assert host_name
         # Get offset from state_store
-        offset = self.state_store.get_state(__name__,
-                                            "{}.offset".format(host_name)) if incremental else None
+        last_post = self.state_store.get_state(__name__,
+                                            "{}.last_post".format(host_name)) if incremental else None
 
-        max_offset = self._process_posts(self._post(host_name=host_name, offset=offset, incremental=incremental))
-        log.debug("Timeline for %s offset %s returned %s posts.", host_name,
-                  offset, self.harvest_result.stats_summary().get("posts"))
+        max_last_post = self._process_posts(self.tumblrapi.user_timeline(hostname=host_name, last_post=last_post,
+                                                                         incremental=incremental))
+        log.debug("Timeline for %s, archived number of posts %s returned %s tbposts.", host_name,
+                  max_last_post, self.harvest_result.stats_summary().get("tbposts"))
 
         # Update state store
-        if incremental and max_offset:
-            self.state_store.set_state(__name__, "{}.offset".format(host_name), max_offset + offset)
-
-    def _post(self, host_name, offset, incremental):
-        start_request = 0
-        params = {}
-
-        if not offset:
-            offset = 0
-
-        while True:
-            if offset:
-                params['offset'] = offset
-            start_request += 1
-            resp = self.tumblrapi.posts(host_name, **params)
-            # total_posts = resp['response']['blog']['total_posts']
-            posts = resp['posts']
-
-            if len(posts) == 0:
-                log.info("no new weibo post matching %s", params)
-                break
-
-            for post in posts:
-                yield post
-
-            if not incremental:
-                break
-
-            offset += len(posts)
-
-            if start_request == 50:
-                seconds = 10
-                log.info("Reach max request, offset %d, sleep %d.", offset, seconds)
-                time.sleep(seconds)
-                # reset start request
-                start_request = 0
+        if incremental and max_last_post:
+            self.state_store.set_state(__name__, "{}.last_post".format(host_name), max_last_post+last_post)
 
     def _process_posts(self, posts):
         max_offset = 0
@@ -94,7 +61,7 @@ class TumblrHarvester(BaseHarvester):
                 log.debug("Stopping since stop event set.")
                 break
             if 'id' in post:
-                self.harvest_result.increment_stats("posts")
+                self.harvest_result.increment_stats("tbposts")
                 max_offset += 1
         return max_offset
 
@@ -102,7 +69,7 @@ class TumblrHarvester(BaseHarvester):
         pass
 
     def _create_tumblrarc(self):
-        self.tumblrapi = pytumblr.TumblrRestClient(self.message["credentials"]["consumer_key"],
+        self.tumblrapi = Tumblrarc(self.message["credentials"]["consumer_key"],
                                                    self.message["credentials"]["consumer_secret"],
                                                    self.message["credentials"]["access_token"],
                                                    self.message["credentials"]["access_token_secret"])
