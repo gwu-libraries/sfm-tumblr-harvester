@@ -1,9 +1,7 @@
 from __future__ import absolute_import
 import tests
 import vcr as base_vcr
-from tests.tumblr import post1,post2
 import unittest
-from mock import MagicMock, patch, call
 from kombu import Connection, Exchange, Queue, Producer
 from sfmutils.state_store import DictHarvestStateStore
 from sfmutils.harvester import HarvestResult, EXCHANGE
