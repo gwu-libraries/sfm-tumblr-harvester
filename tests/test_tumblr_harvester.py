@@ -31,7 +31,7 @@ class TestTumblrHarvesterVCR(tests.TestCase):
         self.harvester.harvest_result_lock = threading.Lock()
         self.harvester.message = {
             "id": "test:1",
-            "type": "tumblr_user_timeline",
+            "type": "tumblr_user_posts",
             "path": "/collections/test_collection_set/collection_id",
             "seeds": [
                 {
@@ -56,7 +56,7 @@ class TestTumblrHarvesterVCR(tests.TestCase):
     def test_search_vcr(self):
         self.harvester.harvest_seeds()
         # check the total number, for new users don't how to check
-        self.assertEqual(self.harvester.harvest_result.stats_summary()["tbposts"], 50)
+        self.assertEqual(self.harvester.harvest_result.stats_summary()["tumblr posts"], 50)
         # check the harvester status
         self.assertTrue(self.harvester.harvest_result.success)
 
@@ -71,7 +71,7 @@ class TestTumblrHarvesterVCR(tests.TestCase):
         # Check harvest result
         self.assertTrue(self.harvester.harvest_result.success)
         # for check the number of get
-        self.assertEqual(self.harvester.harvest_result.stats_summary()["tbposts"], 2114)
+        self.assertEqual(self.harvester.harvest_result.stats_summary()["tumblr posts"], 2114)
         # check the state
         self.assertEqual(2134, self.harvester.state_store.get_state("tumblr_harvester", "{}.last_post".format(host_name)))
 
@@ -109,7 +109,7 @@ class TestTumblrHarvesterIntegration(tests.TestCase):
     def test_search(self):
         harvest_msg = {
             "id": "test:1",
-            "type": "tumblr_user_timeline",
+            "type": "tumblr_user_posts",
             "path": self.harvest_path,
             "seeds": [
                 {
@@ -131,7 +131,7 @@ class TestTumblrHarvesterIntegration(tests.TestCase):
         with self._create_connection() as connection:
             bound_exchange = self.exchange(connection)
             producer = Producer(connection, exchange=bound_exchange)
-            producer.publish(harvest_msg, routing_key="harvest.start.tumblr.tumblr_user_timeline")
+            producer.publish(harvest_msg, routing_key="harvest.start.tumblr.tumblr_user_posts")
 
             # Now wait for result message.
             counter = 0
@@ -149,7 +149,7 @@ class TestTumblrHarvesterIntegration(tests.TestCase):
             # Success
             self.assertEqual("completed success", result_msg["status"])
             # Some posts
-            self.assertTrue(result_msg["stats"][date.today().isoformat()]["tbposts"])
+            self.assertTrue(result_msg["stats"][date.today().isoformat()]["tumblr posts"])
 
             # Web harvest message.
             bound_web_harvest_queue = self.web_harvest_queue(connection)

@@ -24,7 +24,7 @@ def main():
     """
     parser = argparse.ArgumentParser("tumbrlarc")
     parser.add_argument("--user", dest="user",
-                        help="search for posts matching a user's hostname")
+                        help="get posts matching a user's hostname")
     parser.add_argument("--last_post", dest="last_post",
                         help="the number of posts already archive in previous time")
     parser.add_argument("--log", dest="log",
@@ -81,9 +81,9 @@ def main():
                    access_token_secret=access_token_secret)
 
     if args.user:
-        posts = tb.user_timeline(
+        posts = tb.blog_posts(
             args.user,
-            last_post=int(args.last_post),
+            last_post=int(args.last_post) if args.last_post else 0,
         )
     else:
         raise argparse.ArgumentTypeError(
@@ -125,6 +125,7 @@ def status_error(f):
     A decorator to handle http response error from the API.
     refer: https://github.com/edsu/twarc/blob/master/twarc.py
     """
+
     def new_f(*args, **kwargs):
         errors = 0
         while True:
@@ -152,6 +153,7 @@ def status_error(f):
                 time.sleep(seconds)
             else:
                 resp.raise_for_status()
+
     return new_f
 
 
@@ -177,7 +179,12 @@ class Tumblrarc(object):
         self.access_token_secret = access_token_secret
         self._connect()
 
-    def user_timeline(self, hostname, incremental=False, last_post=None, type=None):
+    def blog_info(self,hostname):
+        info_url = '/v2/blog/{0}/info'.format(hostname)
+        url = self.host + info_url
+        resp = self.get(url)
+
+    def blog_posts(self, hostname, incremental=False, last_post=None, type=None, format='text'):
         """
         Issues a POST request against the API
         Not sure the rate time limit for tumblr API. I delay the request for every 50 times.
@@ -185,6 +192,7 @@ class Tumblrarc(object):
         :param last_post:
         :return:
         """
+        info_url = self.host + '/v2/blog/{0}/info'.format(hostname)
         # post url format
         if type is None:
             post_url = '/v2/blog/{0}/posts'.format(hostname)
@@ -196,12 +204,13 @@ class Tumblrarc(object):
         start_request = 0
         # count of request, when reach for 50 sleep for seconds
         count_request = 0
-        params = {'limit': 1}
+        params = {'limit': 50, 'filter': format}
+
         if not last_post:
             last_post = 0
 
         # first get the total number of the post
-        resp = self.get(url, params=params)
+        resp = self.get(info_url)
         total_post = resp.json()['response']['blog']['total_posts']
 
         while start_request < (total_post - last_post):
