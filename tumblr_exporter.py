@@ -21,9 +21,8 @@ class TumblrStatusTable(BaseTable):
         BaseTable.__init__(self, warc_paths, dedupe, item_date_start, item_date_end, seed_uids, TumblrWarcIter)
 
     def _header_row(self):
-        return ('created_at', 'tumblr_id', 'blog_name',
-                'post_type', 'post_slug', 'post_summary', 'post_text', 'tags', 'tumblr_url', 'tumblr_short_url',
-                )
+        return ('created_at', 'tumblr_id', 'blog_name','post_type', 'post_slug',
+                'post_summary', 'post_text', 'tags', 'tumblr_url', 'tumblr_short_url')
 
     def _row(self, item):
         row = [date_parse(item['date']),

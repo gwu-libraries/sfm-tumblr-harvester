@@ -1,5 +1,20 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+blog_info = {
+      "title": "Life is calling. How far will you go?",
+      "name": "peacecorps",
+      "total_posts": 6,
+      "posts": 6,
+      "url": "http://peacecorps.tumblr.com/",
+      "updated": 1468416971,
+      "description": "",
+      "is_nsfw": False,
+      "ask": False,
+      "ask_page_title": "Ask me anything",
+      "ask_anon": False,
+      "share_likes": True,
+      "likes": 1528
+    }
 
 text_post={
         "blog_name": "peacecorps",

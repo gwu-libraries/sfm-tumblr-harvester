@@ -14,6 +14,8 @@ class TumblrHarvester(BaseHarvester):
     def __init__(self, mq_config=None, debug=False):
         BaseHarvester.__init__(self, mq_config=mq_config, debug=debug)
         self.tumblrapi = None
+        self.extract_web_resources = False
+        self.extract_media = False
 
     def harvest_seeds(self):
         self._create_tumblrarc()
@@ -22,13 +24,15 @@ class TumblrHarvester(BaseHarvester):
         log.debug("Harvest type is %s", harvest_type)
         if harvest_type == "tumblr_user_posts":
             self.user_posts()
-        elif harvest_type == "tumblr_search":
-            self.tag_search()
         else:
             raise KeyError
 
     def user_posts(self):
         incremental = self.message.get("options", {}).get("incremental", False)
+
+        # Get harvest extract options.
+        self.extract_web_resources = self.message.get("options", {}).get("web_resources", False)
+        self.extract_media = self.message.get("options", {}).get("media", False)
 
         for seed in self.message.get("seeds", []):
             self._user_post(seed.get("token"), incremental)
@@ -61,11 +65,25 @@ class TumblrHarvester(BaseHarvester):
                 break
             if 'id' in post:
                 self.harvest_result.increment_stats("tumblr posts")
+                self._process_options(post)
                 max_offset += 1
         return max_offset
 
-    def tag_search(self):
-        pass
+    def _process_options(self, post):
+        """
+        source_url for chat photo video audio,'url' for link
+        :param post:
+        :return:
+        """
+        if self.extract_web_resources:
+            if 'url' in post:
+                self.harvest_result.urls.append(post['url'])
+            elif 'source_url' in post:
+                self.harvest_result.urls.append(post['source_url'])
+        if self.extract_media:
+            if post['type'] == 'photo':
+                for ph in post['photos']:
+                    self.harvest_result.urls.append(ph['original_size']['url'])
 
     def _create_tumblrarc(self):
         self.tumblrapi = Tumblrarc(self.message["credentials"]["consumer_key"],

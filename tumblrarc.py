@@ -179,6 +179,16 @@ class Tumblrarc(object):
         self.access_token_secret = access_token_secret
         self._connect()
 
+    def blog_info(self, hostname):
+        """
+        separate the blog info for testing convenient purpose
+        :param hostname:
+        :return:
+        """
+        info_url = self.host + '/v2/blog/{0}/info'.format(hostname)
+        resp = self.get(info_url)
+        return resp.json()['response']['blog']
+
     def blog_posts(self, hostname, incremental=False, last_post=None, type=None, format='text'):
         """
         Issues a POST request against the API
@@ -187,7 +197,6 @@ class Tumblrarc(object):
         :param last_post:
         :return:
         """
-        info_url = self.host + '/v2/blog/{0}/info'.format(hostname)
         # post url format
         if type is None:
             post_url = '/v2/blog/{0}/posts'.format(hostname)
@@ -205,8 +214,8 @@ class Tumblrarc(object):
             last_post = 0
 
         # first get the total number of the post
-        resp = self.get(info_url)
-        total_post = resp.json()['response']['blog']['total_posts']
+        resp = self.blog_info(hostname)
+        total_post = resp['total_posts']
 
         while start_request < (total_post - last_post):
             # get post as much as possible

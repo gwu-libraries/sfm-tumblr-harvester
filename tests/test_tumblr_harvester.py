@@ -1,5 +1,7 @@
 from __future__ import absolute_import
 import tests
+from tests.tumblrposts import text_post, link_post, chat_post, photo_post, audio_post, video_post, blog_info
+from mock import MagicMock, patch, call
 import vcr as base_vcr
 import unittest
 from kombu import Connection, Exchange, Queue, Producer
@@ -12,11 +14,126 @@ import time
 import os
 from datetime import datetime, date
 from tumblr_harvester import TumblrHarvester
+from tumblrarc import Tumblrarc
 
 vcr = base_vcr.VCR(
     cassette_library_dir='tests/fixtures',
     record_mode='once',
 )
+
+
+class TestTumblrHarvester(tests.TestCase):
+    def setUp(self):
+        self.harvester = TumblrHarvester()
+        self.harvester.state_store = DictHarvestStateStore()
+        self.harvester.harvest_result = HarvestResult()
+        self.harvester.stop_event = threading.Event()
+        self.harvester.harvest_result_lock = threading.Lock()
+        self.harvester.message = {
+            "id": "test:0",
+            "type": "tumblr_user_posts",
+            "path": "/collections/test_collection_set/collection_id",
+            "seeds": [
+                {
+                    "token": "peacecorps"
+                }
+            ],
+            "credentials": {
+                "consumer_key": tests.TUMBLR_CONSUMER_KEY,
+                "consumer_secret": tests.TUMBLR_CONSUMER_SECRET,
+                "access_token": tests.TUMBLR_ACCESS_TOKEN,
+                "access_token_secret": tests.TUMBLR_ACCESS_TOKEN_SECRET
+            },
+            "collection_set": {
+                "id": "test_collection_set"
+            },
+            "options": {
+                "web_resources": True,
+                "sizes": ["Large"]
+            }
+        }
+
+    @patch("tumblr_harvester.Tumblrarc", autospec=True)
+    def test_usrer_posts(self, mock_tumblrarc_class):
+        mock_tumblrarc = MagicMock(spec=Tumblrarc)
+        # seting the blog info and total posts
+        mock_tumblrarc.blog_info.side_effect = [(blog_info,), ()]
+        # Expecting all types posts. First returns 6 different posts, Second returns none.
+        mock_tumblrarc.blog_posts.side_effect = [(text_post, link_post, chat_post,
+                                                  photo_post, audio_post, video_post), ()]
+        # Return mock_tumblrarc when instantiating a Tumblrarc.
+        mock_tumblrarc_class.side_effect = [mock_tumblrarc]
+
+        self.harvester.harvest_seeds()
+        self.assertDictEqual({"tumblr posts": 6}, self.harvester.harvest_result.stats_summary())
+        mock_tumblrarc_class.assert_called_once_with(tests.TUMBLR_CONSUMER_KEY, tests.TUMBLR_CONSUMER_SECRET,
+                                                     tests.TUMBLR_ACCESS_TOKEN, tests.TUMBLR_ACCESS_TOKEN_SECRET)
+
+        self.assertEqual([call(hostname='peacecorps', incremental=False, last_post=None)],
+                         mock_tumblrarc.blog_posts.mock_calls)
+        # Nothing added to state
+        self.assertEqual(0, len(self.harvester.state_store._state))
+
+    @patch("tumblr_harvester.Tumblrarc", autospec=True)
+    def test_incremental_search(self, mock_tumblrarc_class):
+        mock_tumblrarc = MagicMock(spec=Tumblrarc)
+        mock_tumblrarc.blog_info.side_effect = [(blog_info, ), ()]
+        # assuming already archive 4 posts and 2 posts left.
+        mock_tumblrarc.blog_posts.side_effect = [(text_post, link_post), ()]
+        # Return mock_tumblrarc when instantiating a Tumblrarc.
+        mock_tumblrarc_class.side_effect = [mock_tumblrarc]
+
+        self.harvester.message["options"] = {
+            # Incremental means that will only retrieve new results.
+            "incremental": True
+        }
+
+        self.harvester.state_store.set_state("tumblr_harvester", "peacecorps.last_post", 4)
+        self.harvester.harvest_seeds()
+
+        self.assertDictEqual({"tumblr posts": 2}, self.harvester.harvest_result.stats_summary())
+        mock_tumblrarc_class.assert_called_once_with(tests.TUMBLR_CONSUMER_KEY, tests.TUMBLR_CONSUMER_SECRET,
+                                                     tests.TUMBLR_ACCESS_TOKEN, tests.TUMBLR_ACCESS_TOKEN_SECRET)
+
+        # since_id must be in the mock calls
+        self.assertEqual([call(hostname='peacecorps', incremental=True, last_post=4)],
+                         mock_tumblrarc.blog_posts.mock_calls)
+        self.assertNotEqual([call(hostname='peacecorps', incremental=True, last_post=None)],
+                            mock_tumblrarc.blog_posts.mock_calls)
+        # State updated
+        self.assertEqual(6, self.harvester.state_store.get_state("tumblr_harvester", "peacecorps.last_post"))
+
+    def test_default_harvest_options(self):
+        self.harvester.extract_web_resources = False
+        self.harvester.extract_media = False
+
+        self.harvester._process_posts([text_post, link_post, chat_post, photo_post, audio_post, video_post])
+        # The default will not sending web harvest
+        self.assertSetEqual(set(), self.harvester.harvest_result.urls_as_set())
+
+    def test_harvest_options_web(self):
+        self.harvester.extract_web_resources = True
+        self.harvester.extract_media = False
+        self.harvester._process_posts([text_post, link_post, chat_post, photo_post, audio_post, video_post])
+        # Testing web resources
+        self.assertSetEqual({
+            'http://lehmanrl.tumblr.com/post/146996540968/theres-a-before-photo-set-for-the-practical',
+            'https://www.peacecorps.gov/stories/7-reasons-peace-corps-volunteers-make-the-best-startup-workers/',
+            'http://maddyandpaulinsenegal.wordpress.com/pulaar-proverbs/',
+            'https://soundcloud.com/chris-flowers-8/bingo-at-jennys-school-final'
+        },
+            self.harvester.harvest_result.urls_as_set())
+
+    def test_harvest_options_media(self):
+        self.harvester.extract_web_resources = False
+        self.harvester.extract_media = True
+
+        self.harvester._process_posts([text_post, link_post, chat_post, photo_post, audio_post, video_post])
+        # Testing photo
+        self.assertSetEqual({
+            'https://67.media.tumblr.com/7834065aa3773cd136b35ab440ccc35e/tumblr_o9wem7wIYv1u9rguio1_1280.jpg'
+        },
+            self.harvester.harvest_result.urls_as_set())
 
 
 @unittest.skipIf(not tests.test_config_available, "Skipping test since test config not available.")
@@ -49,8 +166,8 @@ class TestTumblrHarvesterVCR(tests.TestCase):
             }
         }
 
-    @vcr.use_cassette(filter_query_parameters=['api_key','oauth_body_hash','oauth_nonce','oauth_timestamp',
-                                               'oauth_consumer_key','oauth_token','oauth_signature'])
+    @vcr.use_cassette(filter_query_parameters=['api_key', 'oauth_body_hash', 'oauth_nonce', 'oauth_timestamp',
+                                               'oauth_consumer_key', 'oauth_token', 'oauth_signature'])
     def test_search_vcr(self):
         self.harvester.harvest_seeds()
         # check the total number, for new users don't how to check
@@ -58,8 +175,8 @@ class TestTumblrHarvesterVCR(tests.TestCase):
         # check the harvester status
         self.assertTrue(self.harvester.harvest_result.success)
 
-    @vcr.use_cassette(filter_query_parameters=['api_key','oauth_body_hash','oauth_nonce','oauth_timestamp',
-                                               'oauth_consumer_key','oauth_token','oauth_signature'])
+    @vcr.use_cassette(filter_query_parameters=['api_key', 'oauth_body_hash', 'oauth_nonce', 'oauth_timestamp',
+                                               'oauth_consumer_key', 'oauth_token', 'oauth_signature'])
     def test_incremental_search_vcr(self):
         self.harvester.message["options"]["incremental"] = True
         host_name = self.harvester.message["seeds"][0]["token"]
@@ -71,7 +188,34 @@ class TestTumblrHarvesterVCR(tests.TestCase):
         # for check the number of get
         self.assertEqual(self.harvester.harvest_result.stats_summary()["tumblr posts"], 2114)
         # check the state
-        self.assertEqual(2134, self.harvester.state_store.get_state("tumblr_harvester", "{}.last_post".format(host_name)))
+        self.assertEqual(2134,
+                         self.harvester.state_store.get_state("tumblr_harvester", "{}.last_post".format(host_name)))
+
+    @vcr.use_cassette(filter_query_parameters=['api_key', 'oauth_body_hash', 'oauth_nonce', 'oauth_timestamp',
+                                               'oauth_consumer_key', 'oauth_token', 'oauth_signature'])
+    def test_default_harvest_options_vcr(self):
+        self.harvester.harvest_seeds()
+        # The default is none
+        self.assertSetEqual(set(), self.harvester.harvest_result.urls_as_set())
+
+    @vcr.use_cassette(filter_query_parameters=['api_key', 'oauth_body_hash', 'oauth_nonce', 'oauth_timestamp',
+                                               'oauth_consumer_key', 'oauth_token', 'oauth_signature'])
+    def test_harvest_options_web_vcr(self):
+        self.harvester.message["options"]["web_resources"] = True
+        self.harvester.harvest_seeds()
+
+        # Testing web resources
+        self.assertEqual(15, len(self.harvester.harvest_result.urls_as_set()))
+
+    @vcr.use_cassette(filter_query_parameters=['api_key', 'oauth_body_hash', 'oauth_nonce', 'oauth_timestamp',
+                                               'oauth_consumer_key', 'oauth_token', 'oauth_signature'])
+    def test_harvest_options_media_vcr(self):
+        self.harvester.message["options"]["web_resources"] = False
+        self.harvester.message["options"]["media"] = True
+        self.harvester.harvest_seeds()
+
+        # Testing photos URLs
+        self.assertEqual(53, len(self.harvester.harvest_result.urls_as_set()))
 
 
 @unittest.skipIf(not tests.test_config_available, "Skipping test since test config not available.")
