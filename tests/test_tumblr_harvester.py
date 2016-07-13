@@ -250,7 +250,7 @@ class TestTumblrHarvesterIntegration(tests.TestCase):
 
     def test_search(self):
         harvest_msg = {
-            "id": "test:1",
+            "id": "test:2",
             "type": "tumblr_user_posts",
             "path": self.harvest_path,
             "seeds": [
@@ -268,6 +268,8 @@ class TestTumblrHarvesterIntegration(tests.TestCase):
                 "id": "test_collection_set"
             },
             "options": {
+                "web_resources": True,
+                "media": True
             }
         }
         with self._create_connection() as connection:
@@ -287,7 +289,7 @@ class TestTumblrHarvesterIntegration(tests.TestCase):
 
             result_msg = message_obj.payload
             # Matching ids
-            self.assertEqual("test:1", result_msg["id"])
+            self.assertEqual("test:2", result_msg["id"])
             # Success
             self.assertEqual("completed success", result_msg["status"])
             # Some posts
@@ -297,7 +299,9 @@ class TestTumblrHarvesterIntegration(tests.TestCase):
             bound_web_harvest_queue = self.web_harvest_queue(connection)
             message_obj = bound_web_harvest_queue.get(no_ack=True)
             # the default value is not harvesting web resources.
-            self.assertIsNone(message_obj)
+            self.assertIsNotNone(message_obj, "No web harvest message.")
+            web_harvest_msg = message_obj.payload
+            self.assertTrue(len(web_harvest_msg["seeds"]))
 
             # Warc created message.
             bound_warc_created_queue = self.warc_created_queue(connection)
