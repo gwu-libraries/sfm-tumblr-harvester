@@ -105,15 +105,6 @@ def main():
 
 def save_keys(filename, profile, consumer_key, consumer_secret,
               access_token, access_token_secret):
-    """
-    :param filename: default is twarc based on the import
-    :param profile:
-    :param consumer_key:
-    :param consumer_secret:
-    :param access_token:
-    :param access_token_secret:
-    :return:
-    """
     save_config(filename, profile,
                 consumer_key, consumer_secret,
                 access_token, access_token_secret)
@@ -227,7 +218,7 @@ class Tumblrarc(object):
             posts = resp.json()['response']['posts']
 
             if len(posts) == 0:
-                logging.info("no new weibo post matching %s", params)
+                logging.info("no new tumblr post matching %s", params)
                 break
 
             for post in posts:

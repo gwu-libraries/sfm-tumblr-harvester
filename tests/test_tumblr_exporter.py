@@ -79,7 +79,7 @@ class TestTumblrStatusTable(tests.TestCase):
         self.assertEqual("https://tmblr.co/ZtR4Sx29EEhyL", row[9])
 
 
-class TestWeiboExporterVcr(tests.TestCase):
+class TestTumblrExporterVcr(tests.TestCase):
     def setUp(self):
         self.warc_base_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "warcs")
         self.exporter = TumblrExporter("http://127.0.0.1:8080", warc_base_path=self.warc_base_path)
