@@ -179,11 +179,6 @@ class Tumblrarc(object):
         self.access_token_secret = access_token_secret
         self._connect()
 
-    def blog_info(self,hostname):
-        info_url = '/v2/blog/{0}/info'.format(hostname)
-        url = self.host + info_url
-        resp = self.get(url)
-
     def blog_posts(self, hostname, incremental=False, last_post=None, type=None, format='text'):
         """
         Issues a POST request against the API
