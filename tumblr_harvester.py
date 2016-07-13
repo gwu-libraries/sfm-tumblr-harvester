@@ -7,7 +7,7 @@ import time
 log = logging.getLogger(__name__)
 
 QUEUE = "tumblr_harvester"
-TIMELINE_ROUTING_KEY = "harvest.start.tumblr.tumblr_user_posts"
+USER_POSTS_ROUTING_KEY = "harvest.start.tumblr.tumblr_user_posts"
 
 
 class TumblrHarvester(BaseHarvester):
@@ -75,4 +75,4 @@ class TumblrHarvester(BaseHarvester):
 
 
 if __name__ == "__main__":
-    TumblrHarvester.main(TumblrHarvester, QUEUE, [TIMELINE_ROUTING_KEY])
+    TumblrHarvester.main(TumblrHarvester, QUEUE, [USER_POSTS_ROUTING_KEY])

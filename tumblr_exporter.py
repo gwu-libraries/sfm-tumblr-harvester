@@ -9,7 +9,7 @@ from dateutil.parser import parse as date_parse
 log = logging.getLogger(__name__)
 
 QUEUE = "tumblr_exporter"
-TIME_LINE_ROUTING_KEY = "export.start.tumblr.tumblr_user_posts"
+USER_POSTS_ROUTING_KEY = "export.start.tumblr.tumblr_user_posts"
 
 
 class TumblrStatusTable(BaseTable):
@@ -61,4 +61,4 @@ class TumblrExporter(BaseExporter):
 
 
 if __name__ == "__main__":
-    TumblrExporter.main(TumblrExporter, QUEUE, [TIME_LINE_ROUTING_KEY])
+    TumblrExporter.main(TumblrExporter, QUEUE, [USER_POSTS_ROUTING_KEY])
