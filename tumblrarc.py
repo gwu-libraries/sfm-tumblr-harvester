@@ -2,113 +2,12 @@
 # -*- coding: utf-8 -*-
 
 from __future__ import absolute_import
-import os
 import logging
 import time
-import json
-import argparse
 import requests
 from requests_oauthlib import OAuth1Session
 
-from twarc import get_input, catch_conn_reset, load_config, save_config, default_config_filename
-
-try:
-    import configparser  # Python 3
-except ImportError:
-    import ConfigParser as configparser  # Python 2
-
-
-def main():
-    """
-    The tumbrlarc command line.
-    """
-    parser = argparse.ArgumentParser("tumbrlarc")
-    parser.add_argument("--user", dest="user",
-                        help="get posts matching a user's hostname")
-    parser.add_argument("--last_post", dest="last_post",
-                        help="the number of posts already archive in previous time")
-    parser.add_argument("--log", dest="log",
-                        default="tumblrarc.log", help="log file")
-    parser.add_argument("--consumer_key",
-                        default=None, help="Tumblr API consumer key")
-    parser.add_argument("--consumer_secret",
-                        default=None, help="Tumblr API consumer secret")
-    parser.add_argument("--access_token",
-                        default=None, help="Tumblr API access key")
-    parser.add_argument("--access_token_secret",
-                        default=None, help="Tumblr API access token secret")
-    parser.add_argument('-c', '--config',
-                        default=default_config_filename(),
-                        help="Config file containing Tumblr keys and secrets")
-    parser.add_argument('-p', '--profile', default='main',
-                        help="Name of a profile in your configuration file")
-    parser.add_argument('-w', '--warnings', action='store_true',
-                        help="Include warning messages in output")
-
-    args = parser.parse_args()
-
-    logging.basicConfig(
-        filename=args.log,
-        level=logging.INFO,
-        format="%(asctime)s %(levelname)s %(message)s"
-    )
-
-    consumer_key = args.consumer_key or os.environ.get('CONSUMER_KEY')
-    consumer_secret = args.consumer_secret or os.environ.get('CONSUMER_SECRET')
-    access_token = args.access_token or os.environ.get('ACCESS_TOKEN')
-    access_token_secret = args.access_token_secret or os.environ.get("ACCESS_TOKEN_SECRET")
-
-    if not (consumer_key and consumer_secret and
-                access_token and access_token_secret):
-        credentials = load_config(args.config, args.profile)
-        if credentials:
-            consumer_key = credentials['consumer_key']
-            consumer_secret = credentials['consumer_secret']
-            access_token = credentials['access_token']
-            access_token_secret = credentials['access_token_secret']
-        else:
-            print("Please enter Tumblr authentication credentials")
-            consumer_key = get_input('consumer key: ')
-            consumer_secret = get_input('consumer secret: ')
-            access_token = get_input('access_token: ')
-            access_token_secret = get_input('access token secret: ')
-            save_keys(args.config, args.profile, consumer_key, consumer_secret,
-                      access_token, access_token_secret)
-
-    tb = Tumblrarc(consumer_key=consumer_key,
-                   consumer_secret=consumer_secret,
-                   access_token=access_token,
-                   access_token_secret=access_token_secret)
-
-    if args.user:
-        posts = tb.blog_posts(
-            args.user,
-            last_post=int(args.last_post) if args.last_post else 0,
-        )
-    else:
-        raise argparse.ArgumentTypeError(
-            "must supply one of: --user")
-
-    # iterate through the tweets and write them to stdout
-    for post in posts:
-
-        # include warnings in output only if they asked for it
-        if 'id' in post or args.warnings:
-            print(json.dumps(post))
-
-        # add some info to the log
-        if "id" in post:
-            logging.info("archived %s", post['post_url'])
-        else:
-            logging.warn(json.dumps(post))
-
-
-def save_keys(filename, profile, consumer_key, consumer_secret,
-              access_token, access_token_secret):
-    save_config(filename, profile,
-                consumer_key, consumer_secret,
-                access_token, access_token_secret)
-    print("Keys saved to", filename)
+from twarc import catch_conn_reset
 
 
 def status_error(f):
@@ -170,29 +69,29 @@ class Tumblrarc(object):
         self.access_token_secret = access_token_secret
         self._connect()
 
-    def blog_info(self, hostname):
+    def blog_info(self, blogname):
         """
         separate the blog info for testing convenient purpose
-        :param hostname:
+        :param blogname:
         :return:
         """
-        info_url = self.host + '/v2/blog/{0}/info'.format(hostname)
+        info_url = self.host + '/v2/blog/{0}/info'.format(blogname if "." in blogname else blogname+".tumblr.com")
         resp = self.get(info_url)
         return resp.json()['response']['blog']
 
-    def blog_posts(self, hostname, incremental=False, last_post=None, type=None, format='text'):
+    def blog_posts(self, blogname, incremental=False, last_post=None, type=None, format='text'):
         """
         Issues a POST request against the API
         Not sure the rate time limit for tumblr API. I delay the request for every 50 times.
-        :param hostname:
+        :param blogname:
         :param last_post:
         :return:
         """
         # post url format
         if type is None:
-            post_url = '/v2/blog/{0}/posts'.format(hostname)
+            post_url = '/v2/blog/{0}/posts'.format(blogname if "." in blogname else blogname+".tumblr.com")
         else:
-            post_url = '/v2/blog/{0}/posts/{1}'.format(hostname, type)
+            post_url = '/v2/blog/{0}/posts/{1}'.format(blogname if "." in blogname else blogname+".tumblr.com", type)
 
         url = self.host + post_url
         # the request start position
@@ -205,7 +104,7 @@ class Tumblrarc(object):
             last_post = 0
 
         # first get the total number of the post
-        resp = self.blog_info(hostname)
+        resp = self.blog_info(blogname)
         total_post = resp['total_posts']
 
         while start_request < (total_post - last_post):
@@ -266,6 +165,3 @@ class Tumblrarc(object):
             resource_owner_secret=self.access_token_secret
         )
 
-
-if __name__ == "__main__":
-    main()

@@ -13,8 +13,10 @@ class TumblrWarcIter(BaseWarcIter):
         return url.startswith("https://api.tumblr.com/v2")
 
     def _item_iter(self, url, json_obj):
-        for post in json_obj['response']['posts']:
-            yield "tumblr_posts", post["id"], date_parse(post["date"]), post
+        # kick out the blog info archive
+        if 'posts' in json_obj['response']:
+            for post in json_obj['response']['posts']:
+                yield "tumblr_posts", post["id"], date_parse(post["date"]), post
 
     @staticmethod
     def item_types():

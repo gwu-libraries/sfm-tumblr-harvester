@@ -39,21 +39,24 @@ class TumblrHarvester(BaseHarvester):
             if not self.harvest_result.success:
                 break
 
-    def _user_post(self, host_name, incremental):
-        log.info("Harvesting user %s. Incremental is %s.", host_name, incremental)
-        assert host_name
+    def _user_post(self, blog_name, incremental):
+        log.info("Harvesting user %s. Incremental is %s.", blog_name, incremental)
+        assert blog_name
+
         # Get offset from state_store
         last_post = self.state_store.get_state(__name__,
-                                               "{}.last_post".format(host_name)) if incremental else None
+                                               "{}.last_post".format(blog_name)) if incremental else None
 
-        max_last_post = self._process_posts(self.tumblrapi.blog_posts(hostname=host_name, last_post=last_post,
+        max_last_post = self._process_posts(self.tumblrapi.blog_posts(blogname=blog_name, last_post=last_post,
                                                                       incremental=incremental))
-        log.debug("Timeline for %s, archived number of posts %s returned %s tumblr posts.", host_name,
+        log.debug("Timeline for %s, archived number of posts %s returned %s tumblr posts.", blog_name,
                   max_last_post, self.harvest_result.stats_summary().get("tumblr posts"))
 
         # Update state store
         if incremental and max_last_post:
-            self.state_store.set_state(__name__, "{}.last_post".format(host_name), max_last_post + last_post)
+            if not last_post:
+                last_post = 0
+            self.state_store.set_state(__name__, "{}.last_post".format(blog_name), max_last_post + last_post)
 
     def _process_posts(self, posts):
         max_offset = 0

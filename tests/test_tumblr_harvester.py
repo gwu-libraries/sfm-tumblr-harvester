@@ -69,7 +69,7 @@ class TestTumblrHarvester(tests.TestCase):
         mock_tumblrarc_class.assert_called_once_with(tests.TUMBLR_CONSUMER_KEY, tests.TUMBLR_CONSUMER_SECRET,
                                                      tests.TUMBLR_ACCESS_TOKEN, tests.TUMBLR_ACCESS_TOKEN_SECRET)
 
-        self.assertEqual([call(hostname='peacecorps', incremental=False, last_post=None)],
+        self.assertEqual([call(blogname='peacecorps', incremental=False, last_post=None)],
                          mock_tumblrarc.blog_posts.mock_calls)
         # Nothing added to state
         self.assertEqual(0, len(self.harvester.state_store._state))
@@ -96,9 +96,9 @@ class TestTumblrHarvester(tests.TestCase):
                                                      tests.TUMBLR_ACCESS_TOKEN, tests.TUMBLR_ACCESS_TOKEN_SECRET)
 
         # since_id must be in the mock calls
-        self.assertEqual([call(hostname='peacecorps', incremental=True, last_post=4)],
+        self.assertEqual([call(blogname='peacecorps', incremental=True, last_post=4)],
                          mock_tumblrarc.blog_posts.mock_calls)
-        self.assertNotEqual([call(hostname='peacecorps', incremental=True, last_post=None)],
+        self.assertNotEqual([call(blogname='peacecorps', incremental=True, last_post=None)],
                             mock_tumblrarc.blog_posts.mock_calls)
         # State updated
         self.assertEqual(6, self.harvester.state_store.get_state("tumblr_harvester", "peacecorps.last_post"))
@@ -179,8 +179,8 @@ class TestTumblrHarvesterVCR(tests.TestCase):
                                                'oauth_consumer_key', 'oauth_token', 'oauth_signature'])
     def test_incremental_search_vcr(self):
         self.harvester.message["options"]["incremental"] = True
-        host_name = self.harvester.message["seeds"][0]["token"]
-        self.harvester.state_store.set_state("tumblr_harvester", "{}.last_post".format(host_name), 20)
+        blog_name = self.harvester.message["seeds"][0]["token"]
+        self.harvester.state_store.set_state("tumblr_harvester", "{}.last_post".format(blog_name), 20)
         self.harvester.harvest_seeds()
 
         # Check harvest result
@@ -189,7 +189,7 @@ class TestTumblrHarvesterVCR(tests.TestCase):
         self.assertEqual(self.harvester.harvest_result.stats_summary()["tumblr posts"], 2114)
         # check the state
         self.assertEqual(2134,
-                         self.harvester.state_store.get_state("tumblr_harvester", "{}.last_post".format(host_name)))
+                         self.harvester.state_store.get_state("tumblr_harvester", "{}.last_post".format(blog_name)))
 
     @vcr.use_cassette(filter_query_parameters=['api_key', 'oauth_body_hash', 'oauth_nonce', 'oauth_timestamp',
                                                'oauth_consumer_key', 'oauth_token', 'oauth_signature'])
