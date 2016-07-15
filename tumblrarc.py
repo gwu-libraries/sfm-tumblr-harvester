@@ -6,16 +6,16 @@ import logging
 import time
 import requests
 from requests_oauthlib import OAuth1Session
-
+from functools import wraps
 from twarc import catch_conn_reset
 
 
-def status_error(f):
+def http_status_wraps(f):
     """
     A decorator to handle http response error from the API.
     refer: https://github.com/edsu/twarc/blob/master/twarc.py
     """
-
+    @wraps(f)
     def new_f(*args, **kwargs):
         errors = 0
         while True:
@@ -43,7 +43,24 @@ def status_error(f):
                 time.sleep(seconds)
             else:
                 resp.raise_for_status()
+    return new_f
 
+
+def blogname_wraps(f):
+    """
+    A decorator to handle the blogname in the API calling, to make sure
+    get the same data when process different type input of blogname. EX:
+    codingjester, codingjester.tumblr.com and blog.johnbunting.me are the
+    same blog
+    """
+    @wraps(f)
+    def new_f(*args, **kwargs):
+        # since the input might integer from the sfm-ui token and unicode staff
+        # to make the fun more robust
+        if len(args) > 1 and u'.' not in u'{}'.format(args[1]):
+                args = list(args)
+                args[1] =u'{}.tumblr.com'.format(args[1])
+        return f(*args, **kwargs)
     return new_f
 
 
@@ -69,16 +86,18 @@ class Tumblrarc(object):
         self.access_token_secret = access_token_secret
         self._connect()
 
+    @blogname_wraps
     def blog_info(self, blogname):
         """
         separate the blog info for testing convenient purpose
         :param blogname:
         :return:
         """
-        info_url = self.host + '/v2/blog/{0}/info'.format(blogname if "." in blogname else blogname+".tumblr.com")
+        info_url = u'{0}/v2/blog/{1}/info'.format(self.host, blogname)
         resp = self.get(info_url)
         return resp.json()['response']['blog']
 
+    @blogname_wraps
     def blog_posts(self, blogname, incremental=False, last_post=None, type=None, format='text'):
         """
         Issues a POST request against the API
@@ -89,9 +108,9 @@ class Tumblrarc(object):
         """
         # post url format
         if type is None:
-            post_url = '/v2/blog/{0}/posts'.format(blogname if "." in blogname else blogname+".tumblr.com")
+            post_url = u'/v2/blog/{0}/posts'.format(blogname)
         else:
-            post_url = '/v2/blog/{0}/posts/{1}'.format(blogname if "." in blogname else blogname+".tumblr.com", type)
+            post_url = u'/v2/blog/{0}/posts/{1}'.format(blogname, type)
 
         url = self.host + post_url
         # the request start position
@@ -136,7 +155,7 @@ class Tumblrarc(object):
                 time.sleep(seconds)
                 count_request = 0
 
-    @status_error
+    @http_status_wraps
     @catch_conn_reset
     def get(self, *args, **kwargs):
         try:
@@ -146,7 +165,7 @@ class Tumblrarc(object):
             self._connect()
             return self.get(*args, **kwargs)
 
-    @status_error
+    @http_status_wraps
     @catch_conn_reset
     def post(self, *args, **kwargs):
         try:
