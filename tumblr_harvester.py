@@ -40,26 +40,23 @@ class TumblrHarvester(BaseHarvester):
                 break
 
     def _user_post(self, blog_name, incremental):
-        log.info(u"Harvesting user %s. Incremental is %s.", blog_name, incremental)
+        log.info(u"Harvesting blog %s. Incremental is %s.", blog_name, incremental)
         assert blog_name
 
-        # Get offset from state_store
-        last_post = self.state_store.get_state(__name__,
-                                               u"{}.last_post".format(blog_name)) if incremental else None
+        # Get the post id that record in state_store
+        since_post_id = self.state_store.get_state(__name__,
+                                               u"{}.since_post_id".format(blog_name)) if incremental else None
 
-        max_last_post = self._process_posts(self.tumblrapi.blog_posts(blog_name, last_post=last_post,
-                                                                      incremental=incremental))
-        log.debug(u"Timeline for %s, archived number of posts %s returned %s tumblr posts.", blog_name,
-                  max_last_post, self.harvest_result.stats_summary().get("tumblr posts"))
+        max_post_id = self._process_posts(self.tumblrapi.blog_posts(blog_name, since_post_id=since_post_id))
+        log.debug(u"Searching blog posts for %s, since posts %s returned %s tumblr posts.", blog_name,
+                  since_post_id, self.harvest_result.stats_summary().get("tumblr posts"))
 
         # Update state store
-        if incremental and max_last_post:
-            if not last_post:
-                last_post = 0
-            self.state_store.set_state(__name__, u"{}.last_post".format(blog_name), max_last_post + last_post)
+        if incremental and max_post_id:
+            self.state_store.set_state(__name__, u"{}.since_post_id".format(blog_name), max_post_id)
 
     def _process_posts(self, posts):
-        max_offset = 0
+        max_post_id = None
         for count, post in enumerate(posts):
             if not count % 100:
                 log.debug("Processed %s posts", count)
@@ -67,10 +64,10 @@ class TumblrHarvester(BaseHarvester):
                 log.debug("Stopping since stop event set.")
                 break
             if 'id' in post:
+                max_post_id = max(max_post_id, post['id'])
                 self.harvest_result.increment_stats("tumblr posts")
                 self._process_options(post)
-                max_offset += 1
-        return max_offset
+        return max_post_id
 
     def _process_options(self, post):
         """
@@ -84,15 +81,12 @@ class TumblrHarvester(BaseHarvester):
             elif 'source_url' in post:
                 self.harvest_result.urls.append(post['source_url'])
         if self.extract_media:
-            if post['type'] == 'photo':
+            if 'photos' in post:
                 for ph in post['photos']:
                     self.harvest_result.urls.append(ph['original_size']['url'])
 
     def _create_tumblrarc(self):
-        self.tumblrapi = Tumblrarc(self.message["credentials"]["consumer_key"],
-                                   self.message["credentials"]["consumer_secret"],
-                                   self.message["credentials"]["access_token"],
-                                   self.message["credentials"]["access_token_secret"])
+        self.tumblrapi = Tumblrarc(self.message["credentials"]["api_key"])
 
 
 if __name__ == "__main__":
