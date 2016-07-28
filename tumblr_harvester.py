@@ -7,7 +7,7 @@ import time
 log = logging.getLogger(__name__)
 
 QUEUE = "tumblr_harvester"
-USER_POSTS_ROUTING_KEY = "harvest.start.tumblr.tumblr_user_posts"
+USER_POSTS_ROUTING_KEY = "harvest.start.tumblr.tumblr_blog_posts"
 
 
 class TumblrHarvester(BaseHarvester):
@@ -22,12 +22,12 @@ class TumblrHarvester(BaseHarvester):
 
         harvest_type = self.message.get("type")
         log.debug("Harvest type is %s", harvest_type)
-        if harvest_type == "tumblr_user_posts":
-            self.user_posts()
+        if harvest_type == "tumblr_blog_posts":
+            self.blog_posts()
         else:
             raise KeyError
 
-    def user_posts(self):
+    def blog_posts(self):
         incremental = self.message.get("options", {}).get("incremental", False)
 
         # Get harvest extract options.
@@ -35,11 +35,11 @@ class TumblrHarvester(BaseHarvester):
         self.extract_media = self.message.get("options", {}).get("media", False)
 
         for seed in self.message.get("seeds", []):
-            self._user_post(seed.get("token"), incremental)
+            self._blog_post(seed.get("token"), incremental)
             if not self.harvest_result.success:
                 break
 
-    def _user_post(self, blog_name, incremental):
+    def _blog_post(self, blog_name, incremental):
         log.info(u"Harvesting blog %s. Incremental is %s.", blog_name, incremental)
         assert blog_name
 
@@ -76,10 +76,23 @@ class TumblrHarvester(BaseHarvester):
         :return:
         """
         if self.extract_web_resources:
+            # link type url
             if 'url' in post:
                 self.harvest_result.urls.append(post['url'])
-            elif 'source_url' in post:
+            # the source url, for audio type, some of has this field
+            # using audio_url instead when type is audio
+            elif 'source_url' in post and post['type'] != 'audio':
                 self.harvest_result.urls.append(post['source_url'])
+            # audio url
+            elif 'audio_url' in post:
+                self.harvest_result.urls.append(post['audio_url'])
+            # video youtube
+            elif 'permalink_url' in post:
+                self.harvest_result.urls.append(post['permalink_url'])
+            # directly video url
+            elif 'video_url' in post:
+                self.harvest_result.urls.append(post['video_url'])
+
         if self.extract_media:
             if 'photos' in post:
                 for ph in post['photos']:

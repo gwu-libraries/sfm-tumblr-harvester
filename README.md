@@ -37,13 +37,10 @@ pip install -r requirements/requirements.txt
 
 ### Integration tests (inside docker containers)
 1. Install [Docker](https://docs.docker.com/installation/) and [Docker-Compose](https://docs.docker.com/compose/install/).
-2. Provide the keys and secrets to the tests. This can be done in the way [sfm-twitter-harvest](https://github.com/gwu-libraries/sfm-twitter-harvester#integration-tests-inside-docker-containers) do.  An example looks like:
+2. Provide the api key to the tests. This can be done in the way [sfm-twitter-harvest](https://github.com/gwu-libraries/sfm-twitter-harvester#integration-tests-inside-docker-containers) do.  An example looks like:
 
     ```bash
-    TUMBLR_CONSUMER_KEY = "3jlICwerCIWqEdUdAyuenNyercwkVuXOuYFoxTPafWx8DsUMe2"
-    TUMBLR_CONSUMER_SECRET = "sTCdLJ9kdfgEwTPoYIdfdsteF0XB8WiHlczLx0GgvzRim1L47n"
-    TUMBLR_ACCESS_TOKEN = "sdrsaPx5FtpJ0tfZAG13kMZMjenouGsdJw9W7ssK6husepcFoWg"
-    TUMBLR_ACCESS_TOKEN_SECRET = "0VxKNAMSiNO8IT6PsdattmUsdsfI5X1hP4usBNZLllgkhwsdQiY"
+    TUMBLR_API_KEY = "3jlICwerCIWqEdUdAyuenNyercwkVuXOuYFoxTPafWx8DsUMe2"
     ```
 
 3. Start up the containers.
@@ -62,7 +59,7 @@ pip install -r requirements/requirements.txt
   
 ### User posts harvest type
 
-Type: tumblr_user_posts
+Type: tumblr_blog_posts
 
 Api methods called:
 
@@ -81,8 +78,5 @@ Optional parameters:
 
 Required parameters:
 
-  * consumer_key
-  * consumer_secret
-  * access_token
-  * access_token_secret
+  * api_key
 

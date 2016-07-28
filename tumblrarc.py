@@ -19,6 +19,7 @@ def conn_reset_wraps(f):
     """
     A decorator to handle connection reset errors
     """
+
     try:
         import OpenSSL
         ConnectionError = OpenSSL.SSL.SysCallError
@@ -137,22 +138,23 @@ class Tumblrarc(object):
             resp = self.get(post_url, **params)
             posts = resp.json()['response']['posts']
 
+            start_pos, end_pos = 0, len(posts)
             if max_post_id:
-                posts = filter(lambda x: x['id'] < max_post_id, posts)
+                start_pos = self._lower_bound(posts, max_post_id)
             if since_post_id:
-                posts = filter(lambda x: x['id'] > since_post_id, posts)
+                end_pos = self._upper_bound(posts, since_post_id)
 
             if len(posts) == 0:
                 logging.info("no new tumblr post matching since post %s and max post id %s", since_post_id, max_post_id)
                 break
 
-            for post in posts:
+            for post in posts[start_pos:end_pos]:
                 yield post
 
             max_post_id = post['id'] - 1
 
-            # if the page has apply filter and find the last post id, it should be the last page
-            if 0 < len(posts) < MAX_POST_PER_PAGE:
+            # if the page has apply filter and found the post id, it should be the last page
+            if 0 < (end_pos - start_pos) < MAX_POST_PER_PAGE:
                 logging.info("reach the last page for since post %s and max post id %s", since_post_id, max_post_id)
                 break
 
@@ -173,20 +175,39 @@ class Tumblrarc(object):
         logging.info("creating http session")
         self.client = Client(api_key=self.api_key)
 
+    def _lower_bound(self, posts, max_post_id):
+        """
+        Finding the lower bound of the position to insert the max post id
+        for i<left posts[low]['id']>max_post_id
+        :param posts: the posts need to deal with
+        :param max_post_id: the target post id
+        :return: the position for insert the max_post_id
+        """
+        left, right = 0, len(posts)-1
+        while left <= right:
+            mid = (left + right) / 2
+            if posts[mid]['id'] >= max_post_id:
+                left = mid + 1
+            else:
+                right = mid - 1
+        return left
 
-class APIError(StandardError):
-    """
-    raise APIError if got failed message from the API not the http error.
-    """
-
-    def __init__(self, error_code, error, request):
-        self.error_code = error_code
-        self.error = error
-        self.request = request
-        StandardError.__init__(self, error)
-
-    def __str__(self):
-        return 'APIError: %s, %s, Request: %s' % (self.error_code, self.error, self.request)
+    def _upper_bound(self, posts, since_post_id):
+        """
+        Finding the upper bound of the position to insert the since post id
+        for i>right posts[high]['id']<since_post_id
+        :param posts: the posts need to deal with
+        :param since_post_id: the target since post id
+        :return: the position for insert the since_post_id
+        """
+        left, right = 0, len(posts)-1
+        while left <= right:
+            mid = (left + right) / 2
+            if posts[mid]['id'] > since_post_id:
+                left = mid + 1
+            else:
+                right = mid - 1
+        return left
 
 
 class Client(object):
@@ -203,18 +224,10 @@ class Client(object):
         self.session = requests.session()
         self.session.params = {'api_key': api_key}
 
-    def _assert_error(self, d):
-        """
-        Assert if json response is error.
-        """
-        if 'error_code' in d and 'error' in d:
-            raise APIError(d.get('error_code'), d.get('error', ''), d.get('request', ''))
-
     def get(self, uri, **kwargs):
         """
         Request resource by get method.
         """
         url = u"{0}{1}".format(self.api_url, uri)
         res = self.session.get(url, params=kwargs)
-        self._assert_error(res.json())
         return res

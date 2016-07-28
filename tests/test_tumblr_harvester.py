@@ -34,7 +34,7 @@ class TestTumblrHarvester(tests.TestCase):
         self.harvester.harvest_result_lock = threading.Lock()
         self.harvester.message = {
             "id": "test:0",
-            "type": "tumblr_user_posts",
+            "type": "tumblr_blog_posts",
             "path": "/collections/test_collection_set/collection_id",
             "seeds": [
                 {
@@ -116,7 +116,8 @@ class TestTumblrHarvester(tests.TestCase):
             'http://lehmanrl.tumblr.com/post/146996540968/theres-a-before-photo-set-for-the-practical',
             'https://www.peacecorps.gov/stories/7-reasons-peace-corps-volunteers-make-the-best-startup-workers/',
             'http://maddyandpaulinsenegal.wordpress.com/pulaar-proverbs/',
-            'https://soundcloud.com/chris-flowers-8/bingo-at-jennys-school-final'
+            'https://api.soundcloud.com/tracks/260499686/stream?client_id=3cQaPshpEeLqMsNFAUw1Q',
+            'https://vt.tumblr.com/tumblr_oa44q4JDN91uyyiyx_720.mp4'
         },
             self.harvester.harvest_result.urls_as_set())
 
@@ -142,7 +143,7 @@ class TestTumblrHarvesterVCR(tests.TestCase):
         self.harvester.harvest_result_lock = threading.Lock()
         self.harvester.message = {
             "id": "test:1",
-            "type": "tumblr_user_posts",
+            "type": "tumblr_blog_posts",
             "path": "/collections/test_collection_set/collection_id",
             "seeds": [
                 {
@@ -194,7 +195,7 @@ class TestTumblrHarvesterVCR(tests.TestCase):
         self.harvester.harvest_seeds()
 
         # Testing web resources
-        self.assertEqual(707, len(self.harvester.harvest_result.urls_as_set()))
+        self.assertEqual(742, len(self.harvester.harvest_result.urls_as_set()))
 
     @vcr.use_cassette(filter_query_parameters=['api_key'])
     def test_harvest_options_media_vcr(self):
@@ -239,7 +240,7 @@ class TestTumblrHarvesterIntegration(tests.TestCase):
     def test_search(self):
         harvest_msg = {
             "id": "test:2",
-            "type": "tumblr_user_posts",
+            "type": "tumblr_blog_posts",
             "path": self.harvest_path,
             "seeds": [
                 {
@@ -260,7 +261,7 @@ class TestTumblrHarvesterIntegration(tests.TestCase):
         with self._create_connection() as connection:
             bound_exchange = self.exchange(connection)
             producer = Producer(connection, exchange=bound_exchange)
-            producer.publish(harvest_msg, routing_key="harvest.start.tumblr.tumblr_user_posts")
+            producer.publish(harvest_msg, routing_key="harvest.start.tumblr.tumblr_blog_posts")
 
             # Now wait for result message.
             counter = 0
