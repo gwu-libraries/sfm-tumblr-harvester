@@ -184,6 +184,21 @@ class TestTumblrHarvesterVCR(tests.TestCase):
                          self.harvester.state_store.get_state("tumblr_harvester", u"{}.since_post_id".format(blog_name)))
 
     @vcr.use_cassette(filter_query_parameters=['api_key'])
+    def test_incremental_search_corner_vcr(self):
+        self.harvester.message["options"]["incremental"] = True
+        blog_name = self.harvester.message["seeds"][0]["token"]
+        self.harvester.state_store.set_state("tumblr_harvester", u"{}.since_post_id".format(blog_name), 145825561465)
+        self.harvester.harvest_seeds()
+
+        # Check harvest result
+        self.assertTrue(self.harvester.harvest_result.success)
+        # for check the number of get
+        self.assertEqual(self.harvester.harvest_result.stats_summary()["tumblr posts"], 0)
+        # check the state
+        self.assertEqual(145825561465,
+                         self.harvester.state_store.get_state("tumblr_harvester", u"{}.since_post_id".format(blog_name)))
+
+    @vcr.use_cassette(filter_query_parameters=['api_key'])
     def test_default_harvest_options_vcr(self):
         self.harvester.harvest_seeds()
         # The default is none

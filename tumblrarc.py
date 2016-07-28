@@ -138,13 +138,18 @@ class Tumblrarc(object):
             resp = self.get(post_url, **params)
             posts = resp.json()['response']['posts']
 
+            if len(posts) == 0:
+                logging.info("reach the end of calling for tumblr blog posts.")
+                break
+
             start_pos, end_pos = 0, len(posts)
             if max_post_id:
                 start_pos = self._lower_bound(posts, max_post_id)
             if since_post_id:
                 end_pos = self._upper_bound(posts, since_post_id)
 
-            if len(posts) == 0:
+            # checks the result after filtering
+            if len(posts[start_pos:end_pos]) == 0:
                 logging.info("no new tumblr post matching since post %s and max post id %s", since_post_id, max_post_id)
                 break
 
