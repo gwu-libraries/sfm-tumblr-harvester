@@ -38,7 +38,7 @@ class TestTumblrHarvester(tests.TestCase):
             "path": "/collections/test_collection_set/collection_id",
             "seeds": [
                 {
-                    "token": "peacecorps"
+                    "uid": "peacecorps"
                 }
             ],
             "credentials": {
@@ -147,7 +147,7 @@ class TestTumblrHarvesterVCR(tests.TestCase):
             "path": "/collections/test_collection_set/collection_id",
             "seeds": [
                 {
-                    "token": "codingjester"
+                    "uid": "codingjester"
                 }
             ],
             "credentials": {
@@ -171,7 +171,7 @@ class TestTumblrHarvesterVCR(tests.TestCase):
     @vcr.use_cassette(filter_query_parameters=['api_key'])
     def test_incremental_search_vcr(self):
         self.harvester.message["options"]["incremental"] = True
-        blog_name = self.harvester.message["seeds"][0]["token"]
+        blog_name = self.harvester.message["seeds"][0]["uid"]
         self.harvester.state_store.set_state("tumblr_harvester", u"{}.since_post_id".format(blog_name), 109999716705)
         self.harvester.harvest_seeds()
 
@@ -186,7 +186,7 @@ class TestTumblrHarvesterVCR(tests.TestCase):
     @vcr.use_cassette(filter_query_parameters=['api_key'])
     def test_incremental_search_corner_vcr(self):
         self.harvester.message["options"]["incremental"] = True
-        blog_name = self.harvester.message["seeds"][0]["token"]
+        blog_name = self.harvester.message["seeds"][0]["uid"]
         self.harvester.state_store.set_state("tumblr_harvester", u"{}.since_post_id".format(blog_name), 145825561465)
         self.harvester.harvest_seeds()
 
@@ -259,7 +259,7 @@ class TestTumblrHarvesterIntegration(tests.TestCase):
             "path": self.harvest_path,
             "seeds": [
                 {
-                    "token": "gwuscrc"
+                    "uid": "gwuscrc"
                 }
             ],
             "credentials": {

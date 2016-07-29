@@ -35,7 +35,7 @@ class TumblrHarvester(BaseHarvester):
         self.extract_media = self.message.get("options", {}).get("media", False)
 
         for seed in self.message.get("seeds", []):
-            self._blog_post(seed.get("token"), incremental)
+            self._blog_post(seed.get("uid"), incremental)
             if not self.harvest_result.success:
                 break
 
