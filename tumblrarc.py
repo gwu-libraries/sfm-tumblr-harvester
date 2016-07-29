@@ -40,7 +40,6 @@ def conn_reset_wraps(f):
 def http_status_wraps(f):
     """
     A decorator to handle http response error from the API.
-    refer: https://github.com/edsu/twarc/blob/master/twarc.py
     """
 
     @wraps(f)
@@ -97,7 +96,7 @@ def blogname_wraps(f):
 
 class Tumblrarc(object):
     """
-    It's Tumblr archiving class based on Twarc. Tumblrarc allows
+    It's Tumblr archiving class. Tumblrarc allows
     search for existing posts with specify tags and look up special
     hostname's public posts.Tumblrarc doesn't handle rate limiting
     in the API since the official has no any documents on this.
