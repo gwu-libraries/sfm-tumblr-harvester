@@ -11,7 +11,7 @@ import argparse
 import os
 
 # The re-try time for 404 http error
-MAX_TRIES_404 = 10
+MAX_TRIES_404 = 5
 # The re-try time for >500 error
 MAX_TRIES_500 = 30
 # Official documents say it's 20 but in real it's 50 after trials

@@ -1,0 +1,290 @@
+interactions:
+- request:
+    body: null
+    headers:
+      Accept: ['*/*']
+      Accept-Encoding: ['gzip, deflate']
+      Connection: [keep-alive]
+      User-Agent: [python-requests/2.9.1]
+    method: GET
+    uri: https://api.tumblr.com/v2/blog/invalid_1.tumblr.com/posts?filter=html&limit=50&offset=0
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAAA6tWyk0tSVSyqlYqLkksKS1WsjIxMNFRyi1OV7JS8ssvUXDLL81LUarVUSpKLS7I
+        zytOVbKKjq0FAJ9uXOU3AAAA
+    headers:
+      connection: [keep-alive]
+      content-encoding: [gzip]
+      content-length: ['75']
+      content-type: [application/json; charset=utf-8]
+      date: ['Fri, 19 Aug 2016 16:25:01 GMT']
+      p3p: ['CP="Tumblr''s privacy policy is available here: https://www.tumblr.com/policy/en/privacy"']
+      server: [nginx]
+      vary: [Accept-Encoding]
+    status: {code: 404, message: Not Found}
+- request:
+    body: null
+    headers:
+      Accept: ['*/*']
+      Accept-Encoding: ['gzip, deflate']
+      Connection: [keep-alive]
+      User-Agent: [python-requests/2.9.1]
+    method: GET
+    uri: https://api.tumblr.com/v2/blog/invalid_1.tumblr.com/posts?filter=html&limit=50&offset=0
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAAA6tWyk0tSVSyqlYqLkksKS1WsjIxMNFRyi1OV7JS8ssvUXDLL81LUarVUSpKLS7I
+        zytOVbKKjq0FAJ9uXOU3AAAA
+    headers:
+      connection: [keep-alive]
+      content-encoding: [gzip]
+      content-length: ['75']
+      content-type: [application/json; charset=utf-8]
+      date: ['Fri, 19 Aug 2016 16:25:02 GMT']
+      p3p: ['CP="Tumblr''s privacy policy is available here: https://www.tumblr.com/policy/en/privacy"']
+      server: [nginx]
+      vary: [Accept-Encoding]
+    status: {code: 404, message: Not Found}
+- request:
+    body: null
+    headers:
+      Accept: ['*/*']
+      Accept-Encoding: ['gzip, deflate']
+      Connection: [keep-alive]
+      User-Agent: [python-requests/2.9.1]
+    method: GET
+    uri: https://api.tumblr.com/v2/blog/invalid_1.tumblr.com/posts?filter=html&limit=50&offset=0
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAAA6tWyk0tSVSyqlYqLkksKS1WsjIxMNFRyi1OV7JS8ssvUXDLL81LUarVUSpKLS7I
+        zytOVbKKjq0FAJ9uXOU3AAAA
+    headers:
+      connection: [keep-alive]
+      content-encoding: [gzip]
+      content-length: ['75']
+      content-type: [application/json; charset=utf-8]
+      date: ['Fri, 19 Aug 2016 16:25:03 GMT']
+      p3p: ['CP="Tumblr''s privacy policy is available here: https://www.tumblr.com/policy/en/privacy"']
+      server: [nginx]
+      vary: [Accept-Encoding]
+    status: {code: 404, message: Not Found}
+- request:
+    body: null
+    headers:
+      Accept: ['*/*']
+      Accept-Encoding: ['gzip, deflate']
+      Connection: [keep-alive]
+      User-Agent: [python-requests/2.9.1]
+    method: GET
+    uri: https://api.tumblr.com/v2/blog/invalid_1.tumblr.com/posts?filter=html&limit=50&offset=0
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAAA6tWyk0tSVSyqlYqLkksKS1WsjIxMNFRyi1OV7JS8ssvUXDLL81LUarVUSpKLS7I
+        zytOVbKKjq0FAJ9uXOU3AAAA
+    headers:
+      connection: [keep-alive]
+      content-encoding: [gzip]
+      content-length: ['75']
+      content-type: [application/json; charset=utf-8]
+      date: ['Fri, 19 Aug 2016 16:25:04 GMT']
+      p3p: ['CP="Tumblr''s privacy policy is available here: https://www.tumblr.com/policy/en/privacy"']
+      server: [nginx]
+      vary: [Accept-Encoding]
+    status: {code: 404, message: Not Found}
+- request:
+    body: null
+    headers:
+      Accept: ['*/*']
+      Accept-Encoding: ['gzip, deflate']
+      Connection: [keep-alive]
+      User-Agent: [python-requests/2.9.1]
+    method: GET
+    uri: https://api.tumblr.com/v2/blog/invalid_1.tumblr.com/posts?filter=html&limit=50&offset=0
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAAA6tWyk0tSVSyqlYqLkksKS1WsjIxMNFRyi1OV7JS8ssvUXDLL81LUarVUSpKLS7I
+        zytOVbKKjq0FAJ9uXOU3AAAA
+    headers:
+      connection: [keep-alive]
+      content-encoding: [gzip]
+      content-length: ['75']
+      content-type: [application/json; charset=utf-8]
+      date: ['Fri, 19 Aug 2016 16:25:05 GMT']
+      p3p: ['CP="Tumblr''s privacy policy is available here: https://www.tumblr.com/policy/en/privacy"']
+      server: [nginx]
+      vary: [Accept-Encoding]
+    status: {code: 404, message: Not Found}
+- request:
+    body: null
+    headers:
+      Accept: ['*/*']
+      Accept-Encoding: ['gzip, deflate']
+      Connection: [keep-alive]
+      User-Agent: [python-requests/2.9.1]
+    method: GET
+    uri: https://api.tumblr.com/v2/blog/invalid_1.tumblr.com/posts?filter=html&limit=50&offset=0
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAAA6tWyk0tSVSyqlYqLkksKS1WsjIxMNFRyi1OV7JS8ssvUXDLL81LUarVUSpKLS7I
+        zytOVbKKjq0FAJ9uXOU3AAAA
+    headers:
+      connection: [keep-alive]
+      content-encoding: [gzip]
+      content-length: ['75']
+      content-type: [application/json; charset=utf-8]
+      date: ['Fri, 19 Aug 2016 16:25:06 GMT']
+      p3p: ['CP="Tumblr''s privacy policy is available here: https://www.tumblr.com/policy/en/privacy"']
+      server: [nginx]
+      vary: [Accept-Encoding]
+    status: {code: 404, message: Not Found}
+- request:
+    body: null
+    headers:
+      Accept: ['*/*']
+      Accept-Encoding: ['gzip, deflate']
+      Connection: [keep-alive]
+      User-Agent: [python-requests/2.9.1]
+    method: GET
+    uri: https://api.tumblr.com/v2/blog/invalid_2.tumblr.com/posts?filter=html&limit=50&offset=0
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAAA6tWyk0tSVSyqlYqLkksKS1WsjIxMNFRyi1OV7JS8ssvUXDLL81LUarVUSpKLS7I
+        zytOVbKKjq0FAJ9uXOU3AAAA
+    headers:
+      connection: [keep-alive]
+      content-encoding: [gzip]
+      content-length: ['75']
+      content-type: [application/json; charset=utf-8]
+      date: ['Fri, 19 Aug 2016 16:25:06 GMT']
+      p3p: ['CP="Tumblr''s privacy policy is available here: https://www.tumblr.com/policy/en/privacy"']
+      server: [nginx]
+      vary: [Accept-Encoding]
+    status: {code: 404, message: Not Found}
+- request:
+    body: null
+    headers:
+      Accept: ['*/*']
+      Accept-Encoding: ['gzip, deflate']
+      Connection: [keep-alive]
+      User-Agent: [python-requests/2.9.1]
+    method: GET
+    uri: https://api.tumblr.com/v2/blog/invalid_2.tumblr.com/posts?filter=html&limit=50&offset=0
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAAA6tWyk0tSVSyqlYqLkksKS1WsjIxMNFRyi1OV7JS8ssvUXDLL81LUarVUSpKLS7I
+        zytOVbKKjq0FAJ9uXOU3AAAA
+    headers:
+      connection: [keep-alive]
+      content-encoding: [gzip]
+      content-length: ['75']
+      content-type: [application/json; charset=utf-8]
+      date: ['Fri, 19 Aug 2016 16:25:07 GMT']
+      p3p: ['CP="Tumblr''s privacy policy is available here: https://www.tumblr.com/policy/en/privacy"']
+      server: [nginx]
+      vary: [Accept-Encoding]
+    status: {code: 404, message: Not Found}
+- request:
+    body: null
+    headers:
+      Accept: ['*/*']
+      Accept-Encoding: ['gzip, deflate']
+      Connection: [keep-alive]
+      User-Agent: [python-requests/2.9.1]
+    method: GET
+    uri: https://api.tumblr.com/v2/blog/invalid_2.tumblr.com/posts?filter=html&limit=50&offset=0
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAAA6tWyk0tSVSyqlYqLkksKS1WsjIxMNFRyi1OV7JS8ssvUXDLL81LUarVUSpKLS7I
+        zytOVbKKjq0FAJ9uXOU3AAAA
+    headers:
+      connection: [keep-alive]
+      content-encoding: [gzip]
+      content-length: ['75']
+      content-type: [application/json; charset=utf-8]
+      date: ['Fri, 19 Aug 2016 16:25:08 GMT']
+      p3p: ['CP="Tumblr''s privacy policy is available here: https://www.tumblr.com/policy/en/privacy"']
+      server: [nginx]
+      vary: [Accept-Encoding]
+    status: {code: 404, message: Not Found}
+- request:
+    body: null
+    headers:
+      Accept: ['*/*']
+      Accept-Encoding: ['gzip, deflate']
+      Connection: [keep-alive]
+      User-Agent: [python-requests/2.9.1]
+    method: GET
+    uri: https://api.tumblr.com/v2/blog/invalid_2.tumblr.com/posts?filter=html&limit=50&offset=0
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAAA6tWyk0tSVSyqlYqLkksKS1WsjIxMNFRyi1OV7JS8ssvUXDLL81LUarVUSpKLS7I
+        zytOVbKKjq0FAJ9uXOU3AAAA
+    headers:
+      connection: [keep-alive]
+      content-encoding: [gzip]
+      content-length: ['75']
+      content-type: [application/json; charset=utf-8]
+      date: ['Fri, 19 Aug 2016 16:25:09 GMT']
+      p3p: ['CP="Tumblr''s privacy policy is available here: https://www.tumblr.com/policy/en/privacy"']
+      server: [nginx]
+      vary: [Accept-Encoding]
+    status: {code: 404, message: Not Found}
+- request:
+    body: null
+    headers:
+      Accept: ['*/*']
+      Accept-Encoding: ['gzip, deflate']
+      Connection: [keep-alive]
+      User-Agent: [python-requests/2.9.1]
+    method: GET
+    uri: https://api.tumblr.com/v2/blog/invalid_2.tumblr.com/posts?filter=html&limit=50&offset=0
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAAA6tWyk0tSVSyqlYqLkksKS1WsjIxMNFRyi1OV7JS8ssvUXDLL81LUarVUSpKLS7I
+        zytOVbKKjq0FAJ9uXOU3AAAA
+    headers:
+      connection: [keep-alive]
+      content-encoding: [gzip]
+      content-length: ['75']
+      content-type: [application/json; charset=utf-8]
+      date: ['Fri, 19 Aug 2016 16:25:10 GMT']
+      p3p: ['CP="Tumblr''s privacy policy is available here: https://www.tumblr.com/policy/en/privacy"']
+      server: [nginx]
+      vary: [Accept-Encoding]
+    status: {code: 404, message: Not Found}
+- request:
+    body: null
+    headers:
+      Accept: ['*/*']
+      Accept-Encoding: ['gzip, deflate']
+      Connection: [keep-alive]
+      User-Agent: [python-requests/2.9.1]
+    method: GET
+    uri: https://api.tumblr.com/v2/blog/invalid_2.tumblr.com/posts?filter=html&limit=50&offset=0
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAAA6tWyk0tSVSyqlYqLkksKS1WsjIxMNFRyi1OV7JS8ssvUXDLL81LUarVUSpKLS7I
+        zytOVbKKjq0FAJ9uXOU3AAAA
+    headers:
+      connection: [keep-alive]
+      content-encoding: [gzip]
+      content-length: ['75']
+      content-type: [application/json; charset=utf-8]
+      date: ['Fri, 19 Aug 2016 16:25:11 GMT']
+      p3p: ['CP="Tumblr''s privacy policy is available here: https://www.tumblr.com/policy/en/privacy"']
+      server: [nginx]
+      vary: [Accept-Encoding]
+    status: {code: 404, message: Not Found}
+version: 1

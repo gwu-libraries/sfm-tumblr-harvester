@@ -1,8 +1,9 @@
 from __future__ import absolute_import
 import logging
-from sfmutils.harvester import BaseHarvester
+from sfmutils.harvester import BaseHarvester, Msg, CODE_TOKEN_NOT_FOUND
 from tumblrarc import Tumblrarc
-import time
+from requests.exceptions import HTTPError
+
 
 log = logging.getLogger(__name__)
 
@@ -42,18 +43,25 @@ class TumblrHarvester(BaseHarvester):
     def _blog_post(self, blog_name, incremental):
         log.info(u"Harvesting blog %s. Incremental is %s.", blog_name, incremental)
         assert blog_name
+        try:
+            # Get the post id that record in state_store
+            since_post_id = self.state_store.get_state(__name__,
+                                                   u"{}.since_post_id".format(blog_name)) if incremental else None
 
-        # Get the post id that record in state_store
-        since_post_id = self.state_store.get_state(__name__,
-                                               u"{}.since_post_id".format(blog_name)) if incremental else None
+            max_post_id = self._process_posts(self.tumblrapi.blog_posts(blog_name, since_post_id=since_post_id))
+            log.debug(u"Searching blog posts for %s, since posts %s returned %s tumblr posts.", blog_name,
+                      since_post_id, self.harvest_result.stats_summary().get("tumblr posts"))
 
-        max_post_id = self._process_posts(self.tumblrapi.blog_posts(blog_name, since_post_id=since_post_id))
-        log.debug(u"Searching blog posts for %s, since posts %s returned %s tumblr posts.", blog_name,
-                  since_post_id, self.harvest_result.stats_summary().get("tumblr posts"))
-
-        # Update state store
-        if incremental and max_post_id:
-            self.state_store.set_state(__name__, u"{}.since_post_id".format(blog_name), max_post_id)
+            # Update state store
+            if incremental and max_post_id:
+                self.state_store.set_state(__name__, u"{}.since_post_id".format(blog_name), max_post_id)
+        except HTTPError as e:
+            if e.response.status_code == 404:
+                msg = "Blog hostname {} probably invalid".format(blog_name)
+                log.exception(msg)
+                self.harvest_result.warnings.append(Msg(CODE_TOKEN_NOT_FOUND, msg))
+            else:
+                raise e
 
     def _process_posts(self, posts):
         max_post_id = None

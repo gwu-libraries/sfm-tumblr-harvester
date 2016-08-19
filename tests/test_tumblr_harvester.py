@@ -9,7 +9,7 @@ import vcr as base_vcr
 import unittest
 from kombu import Connection, Exchange, Queue, Producer
 from sfmutils.state_store import DictHarvestStateStore
-from sfmutils.harvester import HarvestResult, EXCHANGE
+from sfmutils.harvester import HarvestResult, EXCHANGE, CODE_TOKEN_NOT_FOUND
 import threading
 import shutil
 import tempfile
@@ -97,7 +97,8 @@ class TestTumblrHarvester(tests.TestCase):
         self.assertNotEqual([call('peacecorps', since_post_id=None)],
                             mock_tumblrarc.blog_posts.mock_calls)
         # State updated
-        self.assertEqual(147341360917, self.harvester.state_store.get_state("tumblr_harvester", "peacecorps.since_post_id"))
+        self.assertEqual(147341360917,
+                         self.harvester.state_store.get_state("tumblr_harvester", "peacecorps.since_post_id"))
 
     def test_default_harvest_options(self):
         self.harvester.extract_web_resources = False
@@ -181,7 +182,8 @@ class TestTumblrHarvesterVCR(tests.TestCase):
         self.assertEqual(self.harvester.harvest_result.stats_summary()["tumblr posts"], 103)
         # check the state
         self.assertEqual(145825561465,
-                         self.harvester.state_store.get_state("tumblr_harvester", u"{}.since_post_id".format(blog_name)))
+                         self.harvester.state_store.get_state("tumblr_harvester",
+                                                              u"{}.since_post_id".format(blog_name)))
 
     @vcr.use_cassette(filter_query_parameters=['api_key'])
     def test_incremental_search_corner_vcr(self):
@@ -196,7 +198,8 @@ class TestTumblrHarvesterVCR(tests.TestCase):
         self.assertEqual(self.harvester.harvest_result.stats_summary()["tumblr posts"], 0)
         # check the state
         self.assertEqual(145825561465,
-                         self.harvester.state_store.get_state("tumblr_harvester", u"{}.since_post_id".format(blog_name)))
+                         self.harvester.state_store.get_state("tumblr_harvester",
+                                                              u"{}.since_post_id".format(blog_name)))
 
     @vcr.use_cassette(filter_query_parameters=['api_key'])
     def test_default_harvest_options_vcr(self):
@@ -220,6 +223,22 @@ class TestTumblrHarvesterVCR(tests.TestCase):
 
         # Testing photos URLs
         self.assertEqual(2192, len(self.harvester.harvest_result.urls_as_set()))
+
+    @vcr.use_cassette(filter_query_parameters=['api_key'])
+    def test_harvest_invalid_blogname_vcr(self):
+        self.harvester.message["seeds"] = [
+            {
+                "id": "seed_id1",
+                "uid": "invalid_1"
+            },
+            {
+                "id": "seed_id2",
+                "uid": "invalid_2"
+            }]
+        self.harvester.harvest_seeds()
+
+        self.assertEqual(2, len(self.harvester.harvest_result.warnings))
+        self.assertEqual(CODE_TOKEN_NOT_FOUND, self.harvester.harvest_result.warnings[0].code)
 
 
 @unittest.skipIf(not tests.test_config_available, "Skipping test since test config not available.")
