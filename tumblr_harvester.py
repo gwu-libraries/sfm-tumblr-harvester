@@ -58,7 +58,7 @@ class TumblrHarvester(BaseHarvester):
     def _process_posts(self, posts):
         max_post_id = None
         for count, post in enumerate(posts):
-            if not count % 100:
+            if not count % 25:
                 log.debug("Processed %s posts", count)
             if self.stop_event.is_set():
                 log.debug("Stopping since stop event set.")

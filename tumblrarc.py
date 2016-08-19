@@ -6,6 +6,9 @@ import logging
 import time
 import requests
 from functools import wraps
+import json
+import argparse
+import os
 
 # The re-try time for 404 http error
 MAX_TRIES_404 = 10
@@ -13,6 +16,70 @@ MAX_TRIES_404 = 10
 MAX_TRIES_500 = 30
 # Official documents say it's 20 but in real it's 50 after trials
 MAX_POST_PER_PAGE = 50
+
+
+def main():
+    """
+    The tumbrlarc command line.
+    """
+    parser = argparse.ArgumentParser("tumbrlarc")
+    parser.add_argument("--blog", dest="blog",
+                        help="get posts matching a user's blogname")
+    parser.add_argument("--max_id", dest="max_id",
+                        help="maximum post id to search for")
+    parser.add_argument("--since_id", dest="since_id",
+                        help="smallest post id to search for")
+    parser.add_argument("--post_type", dest="post_type",
+                        choices=["", "text", "chat", "link", "photo", "audio", "video"],
+                        default="", help="search blog post type")
+    parser.add_argument("--filter_type", dest="filter_type",
+                        choices=["text", "html", "raw"],
+                        default="html", help="search blog post type")
+    parser.add_argument("--log", dest="log",
+                        default="tumblrarc.log", help="log file")
+    parser.add_argument("--api_key",
+                        default=None, help="Tumblr API key")
+
+    args = parser.parse_args()
+
+    logging.basicConfig(
+        filename=args.log,
+        level=logging.INFO,
+        format="%(asctime)s %(levelname)s %(message)s"
+    )
+
+    api_key = args.api_key or os.environ.get('API_KEY')
+
+    if not api_key:
+        print("Please enter Tumblr authentication credentials")
+        api_key = raw_input('API key: ')
+
+    tb = Tumblrarc(api_key=api_key)
+
+    if args.blog:
+        posts = tb.blog_posts(
+            args.blog,
+            since_post_id=None if not args.since_id else int(args.since_id),
+            max_post_id=None if not args.max_id else int(args.max_id),
+            type=None if len(args.post_type) == 0 else args.post_type,
+            format=args.filter_type
+        )
+    else:
+        raise argparse.ArgumentTypeError(
+            "must supply one of: --blog")
+
+    # iterate through the tweets and write them to stdout
+    for post in posts:
+
+        # include warnings in output only if they asked for it
+        if 'id' in post or args.warnings:
+            print(json.dumps(post))
+
+        # add some info to the log
+        if "id" in post:
+            logging.info("archived %s", post['post_url'])
+        else:
+            logging.warn(json.dumps(post))
 
 
 def conn_reset_wraps(f):
@@ -111,7 +178,7 @@ class Tumblrarc(object):
         self._connect()
 
     @blogname_wraps
-    def blog_posts(self, blogname, since_post_id=None, max_post_id=None, type=None, format='text'):
+    def blog_posts(self, blogname, since_post_id=None, max_post_id=None, type=None, format='html'):
         """
         Issues a POST request against the API
         Not sure the rate time limit for tumblr API. I delay the request for every 50 times.
@@ -187,7 +254,7 @@ class Tumblrarc(object):
         :param max_post_id: the target post id
         :return: the position for insert the max_post_id
         """
-        left, right = 0, len(posts)-1
+        left, right = 0, len(posts) - 1
         while left <= right:
             mid = (left + right) / 2
             if posts[mid]['id'] >= max_post_id:
@@ -204,7 +271,7 @@ class Tumblrarc(object):
         :param since_post_id: the target since post id
         :return: the position for insert the since_post_id
         """
-        left, right = 0, len(posts)-1
+        left, right = 0, len(posts) - 1
         while left <= right:
             mid = (left + right) / 2
             if posts[mid]['id'] > since_post_id:
@@ -235,3 +302,7 @@ class Client(object):
         url = u"{0}{1}".format(self.api_url, uri)
         res = self.session.get(url, params=kwargs)
         return res
+
+
+if __name__ == "__main__":
+    main()
