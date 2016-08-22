@@ -3,7 +3,7 @@ import logging
 from sfmutils.harvester import BaseHarvester, Msg, CODE_TOKEN_NOT_FOUND
 from tumblrarc import Tumblrarc
 from requests.exceptions import HTTPError
-
+from bs4 import BeautifulSoup
 
 log = logging.getLogger(__name__)
 
@@ -46,7 +46,7 @@ class TumblrHarvester(BaseHarvester):
         try:
             # Get the post id that record in state_store
             since_post_id = self.state_store.get_state(__name__,
-                                                   u"{}.since_post_id".format(blog_name)) if incremental else None
+                                                       u"{}.since_post_id".format(blog_name)) if incremental else None
 
             max_post_id = self._process_posts(self.tumblrapi.blog_posts(blog_name, since_post_id=since_post_id))
             log.debug(u"Searching blog posts for %s, since posts %s returned %s tumblr posts.", blog_name,
@@ -100,14 +100,31 @@ class TumblrHarvester(BaseHarvester):
             # directly video url
             elif 'video_url' in post:
                 self.harvest_result.urls.append(post['video_url'])
+            # extract url from text type
+            elif 'body' in post:
+                self.harvest_result.urls.extend(self._extract_html_links(post['body'], 'a', 'href'))
 
         if self.extract_media:
             if 'photos' in post:
                 for ph in post['photos']:
                     self.harvest_result.urls.append(ph['original_size']['url'])
+            # extract img from text type
+            elif 'body' in post:
+                self.harvest_result.urls.extend(self._extract_html_links(post['body'], 'img', 'src'))
 
     def _create_tumblrarc(self):
         self.tumblrapi = Tumblrarc(self.message["credentials"]["api_key"])
+
+    def _extract_html_links(self, text, tag_name, link_type):
+        link_lists = []
+        if not text:
+            return link_lists
+        param = {link_type: True}
+        soup = BeautifulSoup(text, "html.parser")
+        for link in soup.find_all(tag_name, **param):
+            # get rid of the \" and \" at the beginning and end
+            link_lists.append(link[link_type])
+        return link_lists
 
 
 if __name__ == "__main__":

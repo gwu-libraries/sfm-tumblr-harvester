@@ -118,7 +118,16 @@ class TestTumblrHarvester(tests.TestCase):
             'https://www.peacecorps.gov/stories/7-reasons-peace-corps-volunteers-make-the-best-startup-workers/',
             'http://maddyandpaulinsenegal.wordpress.com/pulaar-proverbs/',
             'https://api.soundcloud.com/tracks/260499686/stream?client_id=3cQaPshpEeLqMsNFAUw1Q',
-            'https://vt.tumblr.com/tumblr_oa44q4JDN91uyyiyx_720.mp4'
+            'https://vt.tumblr.com/tumblr_oa44q4JDN91uyyiyx_720.mp4',
+            'https://library.gwu.edu/services/computers-wireless/coding',
+            'https://github.com/kennethreitz/requests',
+            'https://documents-dds-ny.un.org/doc/UNDOC/GEN/N00/812/31/PDF/N0081231.pdf',
+            'http://www.crummy.com/software/BeautifulSoup/',
+            'https://elliott.gwu.edu/',
+            'http://www.un.org/en/sc/documents/resolutions/',
+            'https://en.wikipedia.org/wiki/Meta_refresh',
+            'http://www.un.org/en/official-documents-system-search/index.html',
+            'https://documents-dds-ny.un.org/prod/ods_mother.nsf?Login&Username=freeods2&Password=1234?'
         },
             self.harvester.harvest_result.urls_as_set())
 
@@ -129,7 +138,11 @@ class TestTumblrHarvester(tests.TestCase):
         self.harvester._process_posts([text_post, link_post, chat_post, photo_post, audio_post, video_post])
         # Testing photo
         self.assertSetEqual({
-            'https://67.media.tumblr.com/7834065aa3773cd136b35ab440ccc35e/tumblr_o9wem7wIYv1u9rguio1_1280.jpg'
+            'https://67.media.tumblr.com/7834065aa3773cd136b35ab440ccc35e/tumblr_o9wem7wIYv1u9rguio1_1280.jpg',
+            'https://66.media.tumblr.com/c9a37a68e3a16e0155652552035c10a9/tumblr_inline_o3ojciXLcL1t0f420_540.png',
+            'https://67.media.tumblr.com/86c495667eb9cd2fa436361ab6448aa0/tumblr_inline_o3ojbiXb2K1t0f420_540.png',
+            'https://65.media.tumblr.com/e29ca96f6a4d109d3ae8a03fcea0a3d2/tumblr_inline_o3ojawjiNw1t0f420_540.png'
+
         },
             self.harvester.harvest_result.urls_as_set())
 
@@ -213,7 +226,7 @@ class TestTumblrHarvesterVCR(tests.TestCase):
         self.harvester.harvest_seeds()
 
         # Testing web resources
-        self.assertEqual(742, len(self.harvester.harvest_result.urls_as_set()))
+        self.assertEqual(811, len(self.harvester.harvest_result.urls_as_set()))
 
     @vcr.use_cassette(filter_query_parameters=['api_key'])
     def test_harvest_options_media_vcr(self):
@@ -222,7 +235,7 @@ class TestTumblrHarvesterVCR(tests.TestCase):
         self.harvester.harvest_seeds()
 
         # Testing photos URLs
-        self.assertEqual(2192, len(self.harvester.harvest_result.urls_as_set()))
+        self.assertEqual(2215, len(self.harvester.harvest_result.urls_as_set()))
 
     @vcr.use_cassette(filter_query_parameters=['api_key'])
     def test_harvest_invalid_blogname_vcr(self):
