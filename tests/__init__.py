@@ -6,13 +6,9 @@ import socket
 try:
     from test_config import *
 except ImportError:
-    TUMBLR_CONSUMER_KEY = os.environ.get("TUMBLR_CONSUMER_KEY")
-    TUMBLR_CONSUMER_SECRET = os.environ.get("TUMBLR_CONSUMER_SECRET")
-    TUMBLR_ACCESS_TOKEN = os.environ.get("TUMBLR_ACCESS_TOKEN")
-    TUMBLR_ACCESS_TOKEN_SECRET = os.environ.get("TUMBLR_ACCESS_TOKEN_SECRET")
+    TUMBLR_API_KEY = os.environ.get("TUMBLR_API_KEY")
 
-test_config_available = True if TUMBLR_CONSUMER_KEY and TUMBLR_CONSUMER_SECRET \
-                                and TUMBLR_ACCESS_TOKEN and TUMBLR_ACCESS_TOKEN_SECRET else False
+test_config_available = True if TUMBLR_API_KEY else False
 
 mq_port_available = True
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
