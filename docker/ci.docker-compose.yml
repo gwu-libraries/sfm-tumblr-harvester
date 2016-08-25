@@ -1,20 +1,21 @@
-sfmrabbit:
-    image: rabbitmq@sha256:a5180a37b0baebb938ee9d12dd11eed64a909288d7f344e24771278f8a122367
-    environment:
-        - TZ=America/New_York
-        - RABBITMQ_DEFAULT_USER=sfm_user
-        - RABBITMQ_DEFAULT_PASS=password
-sfmtumblrharvester:
-    image: gwul/sfm-tumblr-harvester:dev
-    links:
-        - sfmrabbit:mq
-    volumes:
-        - "..:/opt/sfm-tumblr-harvester"
-    environment:
-        - TZ=America/New_York
-        - TUMBLR_CONSUMER_KEY
-        - TUMBLR_CONSUMER_SECRET
-        - TUMBLR_ACCESS_TOKEN
-        - TUMBLR_ACCESS_TOKEN_SECRET
-
-    command: bash -c "pip install -r  requirements/master.txt --upgrade && appdeps.py --port-wait mq:5672 && python tumblr_harvester.py --debug=True service mq sfm_user password"
+version: "2"
+services:
+  sfmrabbit:
+      image: rabbitmq@sha256:397382d2b222f3a298a6c74e93f348fb16f9a7fde2c02ba14122624d852daae3
+      environment:
+          - TZ=America/New_York
+          - RABBITMQ_DEFAULT_USER=sfm_user
+          - RABBITMQ_DEFAULT_PASS=password
+  sfmtumblrharvester:
+      image: gwul/sfm-tumblr-harvester:master
+      links:
+          - sfmrabbit:mq
+      volumes:
+          - "..:/opt/sfm-tumblr-harvester"
+      environment:
+          - TZ=America/New_York
+          - TUMBLR_API_KEY
+          - SFM_REQS=master
+          - RABBITMQ_USER=sfm_user
+          - RABBITMQ_PASSWORD=password
+          - DEBUG=true
