@@ -3,60 +3,18 @@ A basic harvester for Tumblr public post data as part of [Social Feed Manager](h
 
 [![Build Status](https://travis-ci.org/gwu-libraries/sfm-tumblr-harvester.svg?branch=master)](https://travis-ci.org/gwu-libraries/sfm-tumblr-harvester)
 
-Provides harvesters for [Tumblr API](https://www.tumblr.com/docs/en/api/v2) and harvesting is performed by tumblrarc which based on [requests-oauthlib](https://github.com/requests/requests-oauthlib).
+Provides harvesters for [Tumblr API](https://www.tumblr.com/docs/en/api/v2) and harvesting is performed by tumblrarc which
+based on [requests-oauthlib](https://github.com/requests/requests-oauthlib).
 
-# Install
-```bash
-git clone https://github.com/gwu-libraries/sfm-tumblr-harvester
-cd sfm-tumblr-harvester
-pip install -r requirements/requirements.txt
-```
+## Development
 
-# Ready to work
-* Sign up an account at [Tumblr](https://www.tumblr.com).
-* Register an application at [here](https://www.tumblr.com/oauth/apps) to get your `CONSUMER_KEY`, `CONSUMER_SECRET`. 
-* Provide your `CONSUMER_KEY` and `CONSUMER_SECRET` and get your access token at [here]( https://api.tumblr.com/console).
-* Once you are succeed authorized your APP, click the `Show Keys` button at the top-right.
-* An example of the keys looks like (the following keys are invalid):
+For information on development and running tests, see the [development documentation](http://sfm.readthedocs.io/en/latest/development.html).
 
-    ```bash
-    CONSUMER_KEY = "3jlICwerCIWqEdUdAyuenNyercwkVuXOuYFoxTPafWx8DsUMe2"
-    CONSUMER_SECRET = "sTCdLJ9kdfgEwTPoYIdfdsteF0XB8WiHlczLx0GgvzRim1L47n"
-    ACCESS_TOKEN = "sdrsaPx5FtpJ0tfZAG13kMZMjenouGsdJw9W7ssK6husepcFoWg"
-    ACCESS_TOKEN_SECRET = "0VxKNAMSiNO8IT6PsdattmUsdsfI5X1hP4usBNZLllgkhwsdQiY"
-    ________________________________________________________________________
-    API_KEY = "3jlICwerCIWqEdUdAyuenNyercwkVuXOuYFoxTPafWx8DsUMe2"
-    ```
+When running tests, provide Tumblr credentials either as a `test_config.py` file or environment variable (`TUMBLR_API_KEY`).
+An example `test_config.py` looks like:
 
-> The corresponding keys for testing needs add the prefix `TUMBLR_`.
-
-## Tests
-
-### Unit tests
-    python -m unittest discover
-
-### Integration tests (inside docker containers)
-1. Install [Docker](https://docs.docker.com/installation/) and [Docker-Compose](https://docs.docker.com/compose/install/).
-2. Provide the api key to the tests. This can be done in the way [sfm-twitter-harvest](https://github.com/gwu-libraries/sfm-twitter-harvester#integration-tests-inside-docker-containers) do.  An example looks like:
-
-    ```bash
     TUMBLR_API_KEY = "3jlICwerCIWqEdUdAyuenNyercwkVuXOuYFoxTPafWx8DsUMe2"
-    ```
 
-3. Start up the containers.
-
-        docker-compose -f docker/dev.docker-compose.yml up -d
-
-4. Run the tests.
-
-        docker exec docker_sfmtwitterstreamharvester_1 python -m unittest discover
-
-5. Shutdown containers.
-
-        docker-compose -f docker/dev.docker-compose.yml kill
-        docker-compose -f docker/dev.docker-compose.yml rm -v --force
-        
-  
 ### User posts harvest type
 
 Type: tumblr_blog_posts
