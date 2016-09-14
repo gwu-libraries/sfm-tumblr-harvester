@@ -54,9 +54,9 @@ class TumblrStatusTable(BaseTable):
 
 
 class TumblrExporter(BaseExporter):
-    def __init__(self, api_base_url, mq_config=None, warc_base_path=None):
-        BaseExporter.__init__(self, api_base_url, TumblrWarcIter, TumblrStatusTable, mq_config=mq_config,
-                              warc_base_path=warc_base_path)
+    def __init__(self, api_base_url, working_path, mq_config=None, warc_base_path=None):
+        BaseExporter.__init__(self, api_base_url, TumblrWarcIter, TumblrStatusTable, working_path,
+                              mq_config=mq_config, warc_base_path=warc_base_path)
 
 
 if __name__ == "__main__":

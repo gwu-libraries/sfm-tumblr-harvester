@@ -84,13 +84,17 @@ class TestTumblrStatusTable(tests.TestCase):
 class TestTumblrExporterVcr(tests.TestCase):
     def setUp(self):
         self.warc_base_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "warcs")
-        self.exporter = TumblrExporter("http://127.0.0.1:8080", warc_base_path=self.warc_base_path)
+        self.working_path = tempfile.mkdtemp()
+        self.exporter = TumblrExporter("http://127.0.0.1:8080", self.working_path, warc_base_path=self.warc_base_path)
         self.exporter.routing_key = "export.start.tumblr.tumblr_blog_posts"
         self.export_path = tempfile.mkdtemp()
 
     def tearDown(self):
         if os.path.exists(self.export_path):
             shutil.rmtree(self.export_path)
+
+        if os.path.exists(self.working_path):
+            shutil.rmtree(self.working_path)
 
     @vcr.use_cassette()
     def test_export_collection(self):
@@ -107,7 +111,7 @@ class TestTumblrExporterVcr(tests.TestCase):
         self.exporter.message = export_message
         self.exporter.on_message()
 
-        self.assertTrue(self.exporter.export_result.success)
+        self.assertTrue(self.exporter.result.success)
         csv_filepath = os.path.join(self.export_path, "test1.csv")
         self.assertTrue(os.path.exists(csv_filepath))
         with open(csv_filepath, "r") as f:
