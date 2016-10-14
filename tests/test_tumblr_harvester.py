@@ -4,12 +4,14 @@
 from __future__ import absolute_import
 import tests
 from tests.tumblrposts import text_post, link_post, chat_post, photo_post, audio_post, video_post
+from tumblr_warc_iter import TumblrWarcIter
 from mock import MagicMock, patch, call
 import vcr as base_vcr
 import unittest
 from kombu import Connection, Exchange, Queue, Producer
 from sfmutils.state_store import DictHarvestStateStore
-from sfmutils.harvester import HarvestResult, EXCHANGE, CODE_TOKEN_NOT_FOUND
+from sfmutils.harvester import HarvestResult, EXCHANGE, CODE_TOKEN_NOT_FOUND, STATUS_RUNNING, STATUS_SUCCESS
+from sfmutils.warc_iter import IterItem
 import threading
 import shutil
 import tempfile
@@ -27,11 +29,12 @@ vcr = base_vcr.VCR(
 
 class TestTumblrHarvester(tests.TestCase):
     def setUp(self):
-        self.harvester = TumblrHarvester()
+        self.working_path = tempfile.mkdtemp()
+        self.harvester = TumblrHarvester(self.working_path)
         self.harvester.state_store = DictHarvestStateStore()
-        self.harvester.harvest_result = HarvestResult()
-        self.harvester.stop_event = threading.Event()
-        self.harvester.harvest_result_lock = threading.Lock()
+        self.harvester.result = HarvestResult()
+        self.harvester.stop_harvest_seeds_event = threading.Event()
+
         self.harvester.message = {
             "id": "test:0",
             "type": "tumblr_blog_posts",
@@ -53,8 +56,12 @@ class TestTumblrHarvester(tests.TestCase):
             }
         }
 
+    def tearDown(self):
+        if os.path.exists(self.working_path):
+            shutil.rmtree(self.working_path)
+
     @patch("tumblr_harvester.Tumblrarc", autospec=True)
-    def test_usrer_posts(self, mock_tumblrarc_class):
+    def test_user_posts(self, mock_tumblrarc_class):
         mock_tumblrarc = MagicMock(spec=Tumblrarc)
 
         # Expecting all types posts. First returns 6 different posts, Second returns none.
@@ -64,13 +71,13 @@ class TestTumblrHarvester(tests.TestCase):
         mock_tumblrarc_class.side_effect = [mock_tumblrarc]
 
         self.harvester.harvest_seeds()
-        self.assertDictEqual({"tumblr posts": 6}, self.harvester.harvest_result.stats_summary())
+        self.assertDictEqual({"tumblr posts": 6}, self.harvester.result.harvest_counter)
         mock_tumblrarc_class.assert_called_once_with(tests.TUMBLR_API_KEY)
 
         self.assertEqual([call('peacecorps', since_post_id=None)],
                          mock_tumblrarc.blog_posts.mock_calls)
         # Nothing added to state
-        self.assertEqual(0, len(self.harvester.state_store._state))
+        # self.assertEqual(0, len(self.harvester.state_store._state))
 
     @patch("tumblr_harvester.Tumblrarc", autospec=True)
     def test_incremental_search(self, mock_tumblrarc_class):
@@ -88,7 +95,7 @@ class TestTumblrHarvester(tests.TestCase):
         self.harvester.state_store.set_state("tumblr_harvester", "peacecorps.since_post_id", 147299875398)
         self.harvester.harvest_seeds()
 
-        self.assertDictEqual({"tumblr posts": 3}, self.harvester.harvest_result.stats_summary())
+        self.assertDictEqual({"tumblr posts": 3}, self.harvester.result.harvest_counter)
         mock_tumblrarc_class.assert_called_once_with(tests.TUMBLR_API_KEY)
 
         # since_id must be in the mock calls
@@ -97,21 +104,72 @@ class TestTumblrHarvester(tests.TestCase):
         self.assertNotEqual([call('peacecorps', since_post_id=None)],
                             mock_tumblrarc.blog_posts.mock_calls)
         # State updated
+        # self.assertEqual(147341360917,
+        #                  self.harvester.state_store.get_state("tumblr_harvester", "peacecorps.since_post_id"))
+
+    @staticmethod
+    def _iter_items(items):
+        # This is useful for mocking out a warc iter
+        iter_items = []
+        for item in items:
+            iter_items.append(IterItem(None, None, None, None, item))
+        return iter_items
+
+    @patch("tumblr_harvester.TumblrWarcIter", autospec=True)
+    def test_process(self, iter_class):
+        mock_iter = MagicMock(spec=TumblrWarcIter)
+        mock_iter.__iter__.side_effect = [
+            self._iter_items([text_post, link_post, chat_post, photo_post, audio_post, video_post]).__iter__()]
+        iter_class.side_effect = [mock_iter]
+
+        # These are default harvest options
+        self.harvester.extract_web_resources = False
+        self.harvester.extract_media = False
+        self.harvester.incremental = False
+
+        self.harvester.process_warc("test.warc.gz")
+        # The default will not sending web harvest
+        self.assertSetEqual(set(), self.harvester.result.urls_as_set())
+        iter_class.assert_called_once_with("test.warc.gz")
+        self.assertEqual(6, self.harvester.result.stats_summary()["tumblr posts"])
+        # State not set
+        self.assertIsNone(self.harvester.state_store.get_state("tumblr_harvester", "peacecorps.since_post_id"))
+
+    @patch("tumblr_harvester.TumblrWarcIter", autospec=True)
+    def test_process_incremental(self, iter_class):
+        mock_iter = MagicMock(spec=TumblrWarcIter)
+        mock_iter.__iter__.side_effect = [
+            self._iter_items([video_post, text_post, photo_post]).__iter__()]
+        iter_class.side_effect = [mock_iter]
+
+        # These are default harvest options
+        self.harvester.extract_web_resources = False
+        self.harvester.extract_media = False
+        self.harvester.incremental = True
+        self.harvester.state_store.set_state("tumblr_harvester", "peacecorps.since_post_id", 147299875398)
+
+        self.harvester.process_warc("test.warc.gz")
+        # The default will not sending web harvest
+        self.assertSetEqual(set(), self.harvester.result.urls_as_set())
+        iter_class.assert_called_once_with("test.warc.gz")
+        self.assertEqual(3, self.harvester.result.stats_summary()["tumblr posts"])
+        # State updated
         self.assertEqual(147341360917,
                          self.harvester.state_store.get_state("tumblr_harvester", "peacecorps.since_post_id"))
 
-    def test_default_harvest_options(self):
-        self.harvester.extract_web_resources = False
-        self.harvester.extract_media = False
+    @patch("tumblr_harvester.TumblrWarcIter", autospec=True)
+    def test_process_harvest_options_web(self, iter_class):
+        mock_iter = MagicMock(spec=TumblrWarcIter)
+        mock_iter.__iter__.side_effect = [
+            self._iter_items([text_post, link_post, chat_post, photo_post, audio_post, video_post]).__iter__()]
+        iter_class.side_effect = [mock_iter]
 
-        self.harvester._process_posts([text_post, link_post, chat_post, photo_post, audio_post, video_post])
-        # The default will not sending web harvest
-        self.assertSetEqual(set(), self.harvester.harvest_result.urls_as_set())
-
-    def test_harvest_options_web(self):
         self.harvester.extract_web_resources = True
         self.harvester.extract_media = False
-        self.harvester._process_posts([text_post, link_post, chat_post, photo_post, audio_post, video_post])
+        self.harvester.incremental = False
+
+        self.harvester.process_warc("test.warc.gz")
+
         # Testing web resources
         self.assertSetEqual({
             'http://lehmanrl.tumblr.com/post/146996540968/theres-a-before-photo-set-for-the-practical',
@@ -128,14 +186,24 @@ class TestTumblrHarvester(tests.TestCase):
             'https://en.wikipedia.org/wiki/Meta_refresh',
             'http://www.un.org/en/official-documents-system-search/index.html',
             'https://documents-dds-ny.un.org/prod/ods_mother.nsf?Login&Username=freeods2&Password=1234?'
-        },
-            self.harvester.harvest_result.urls_as_set())
+        }, self.harvester.result.urls_as_set())
+        iter_class.assert_called_once_with("test.warc.gz")
+        self.assertEqual(6, self.harvester.result.stats_summary()["tumblr posts"])
 
-    def test_harvest_options_media(self):
+    @patch("tumblr_harvester.TumblrWarcIter", autospec=True)
+    def test_process_harvest_options_media(self, iter_class):
+        mock_iter = MagicMock(spec=TumblrWarcIter)
+        mock_iter.__iter__.side_effect = [
+            self._iter_items([text_post, link_post, chat_post, photo_post, audio_post, video_post]).__iter__()]
+        iter_class.side_effect = [mock_iter]
+
         self.harvester.extract_web_resources = False
         self.harvester.extract_media = True
+        self.harvester.incremental = False
 
-        self.harvester._process_posts([text_post, link_post, chat_post, photo_post, audio_post, video_post])
+        self.harvester.process_warc("test.warc.gz")
+
+        self.harvester._harvest_posts([text_post, link_post, chat_post, photo_post, audio_post, video_post])
         # Testing photo
         self.assertSetEqual({
             'https://67.media.tumblr.com/7834065aa3773cd136b35ab440ccc35e/tumblr_o9wem7wIYv1u9rguio1_1280.jpg',
@@ -143,18 +211,21 @@ class TestTumblrHarvester(tests.TestCase):
             'https://67.media.tumblr.com/86c495667eb9cd2fa436361ab6448aa0/tumblr_inline_o3ojbiXb2K1t0f420_540.png',
             'https://65.media.tumblr.com/e29ca96f6a4d109d3ae8a03fcea0a3d2/tumblr_inline_o3ojawjiNw1t0f420_540.png'
 
-        },
-            self.harvester.harvest_result.urls_as_set())
+        }, self.harvester.result.urls_as_set())
+        iter_class.assert_called_once_with("test.warc.gz")
+        self.assertEqual(6, self.harvester.result.stats_summary()["tumblr posts"])
 
 
 @unittest.skipIf(not tests.test_config_available, "Skipping test since test config not available.")
 class TestTumblrHarvesterVCR(tests.TestCase):
     def setUp(self):
-        self.harvester = TumblrHarvester()
+        self.working_path = tempfile.mkdtemp()
+        self.harvester = TumblrHarvester(self.working_path)
         self.harvester.state_store = DictHarvestStateStore()
-        self.harvester.harvest_result = HarvestResult()
-        self.harvester.stop_event = threading.Event()
-        self.harvester.harvest_result_lock = threading.Lock()
+        self.harvester.result = HarvestResult()
+        # self.harvester.stop_event = threading.Event()
+        # self.harvester.harvest_result_lock = threading.Lock()
+        self.harvester.stop_harvest_seeds_event = threading.Event()
         self.harvester.message = {
             "id": "test:1",
             "type": "tumblr_blog_posts",
@@ -174,13 +245,17 @@ class TestTumblrHarvesterVCR(tests.TestCase):
             }
         }
 
+    def tearDown(self):
+        if os.path.exists(self.working_path):
+            shutil.rmtree(self.working_path)
+
     @vcr.use_cassette(filter_query_parameters=['api_key'])
     def test_search_vcr(self):
         self.harvester.harvest_seeds()
         # check the total number, for new users don't how to check
-        self.assertEqual(self.harvester.harvest_result.stats_summary()["tumblr posts"], 2134)
+        self.assertEqual(self.harvester.result.harvest_counter["tumblr posts"], 2134)
         # check the harvester status
-        self.assertTrue(self.harvester.harvest_result.success)
+        self.assertTrue(self.harvester.result.success)
 
     @vcr.use_cassette(filter_query_parameters=['api_key'])
     def test_incremental_search_vcr(self):
@@ -190,13 +265,9 @@ class TestTumblrHarvesterVCR(tests.TestCase):
         self.harvester.harvest_seeds()
 
         # Check harvest result
-        self.assertTrue(self.harvester.harvest_result.success)
+        self.assertTrue(self.harvester.result.success)
         # for check the number of get
-        self.assertEqual(self.harvester.harvest_result.stats_summary()["tumblr posts"], 103)
-        # check the state
-        self.assertEqual(145825561465,
-                         self.harvester.state_store.get_state("tumblr_harvester",
-                                                              u"{}.since_post_id".format(blog_name)))
+        self.assertEqual(self.harvester.result.harvest_counter["tumblr posts"], 103)
 
     @vcr.use_cassette(filter_query_parameters=['api_key'])
     def test_incremental_search_corner_vcr(self):
@@ -206,36 +277,13 @@ class TestTumblrHarvesterVCR(tests.TestCase):
         self.harvester.harvest_seeds()
 
         # Check harvest result
-        self.assertTrue(self.harvester.harvest_result.success)
+        self.assertTrue(self.harvester.result.success)
         # for check the number of get
-        self.assertEqual(self.harvester.harvest_result.stats_summary()["tumblr posts"], 0)
+        self.assertEqual(self.harvester.result.harvest_counter["tumblr posts"], 0)
         # check the state
         self.assertEqual(145825561465,
                          self.harvester.state_store.get_state("tumblr_harvester",
                                                               u"{}.since_post_id".format(blog_name)))
-
-    @vcr.use_cassette(filter_query_parameters=['api_key'])
-    def test_default_harvest_options_vcr(self):
-        self.harvester.harvest_seeds()
-        # The default is none
-        self.assertSetEqual(set(), self.harvester.harvest_result.urls_as_set())
-
-    @vcr.use_cassette(filter_query_parameters=['api_key'])
-    def test_harvest_options_web_vcr(self):
-        self.harvester.message["options"]["web_resources"] = True
-        self.harvester.harvest_seeds()
-
-        # Testing web resources
-        self.assertEqual(811, len(self.harvester.harvest_result.urls_as_set()))
-
-    @vcr.use_cassette(filter_query_parameters=['api_key'])
-    def test_harvest_options_media_vcr(self):
-        self.harvester.message["options"]["web_resources"] = False
-        self.harvester.message["options"]["media"] = True
-        self.harvester.harvest_seeds()
-
-        # Testing photos URLs
-        self.assertEqual(2215, len(self.harvester.harvest_result.urls_as_set()))
 
     @vcr.use_cassette(filter_query_parameters=['api_key'])
     def test_harvest_invalid_blogname_vcr(self):
@@ -250,14 +298,15 @@ class TestTumblrHarvesterVCR(tests.TestCase):
             }]
         self.harvester.harvest_seeds()
 
-        self.assertEqual(2, len(self.harvester.harvest_result.warnings))
-        self.assertEqual(CODE_TOKEN_NOT_FOUND, self.harvester.harvest_result.warnings[0].code)
+        self.assertEqual(2, len(self.harvester.result.warnings))
+        self.assertEqual(CODE_TOKEN_NOT_FOUND, self.harvester.result.warnings[0].code)
 
 
 @unittest.skipIf(not tests.test_config_available, "Skipping test since test config not available.")
 @unittest.skipIf(not tests.integration_env_available, "Skipping test since integration env not available.")
 class TestTumblrHarvesterIntegration(tests.TestCase):
-    def _create_connection(self):
+    @staticmethod
+    def _create_connection():
         return Connection(hostname="mq", userid=tests.mq_username, password=tests.mq_password)
 
     def setUp(self):
@@ -310,36 +359,42 @@ class TestTumblrHarvesterIntegration(tests.TestCase):
             producer = Producer(connection, exchange=bound_exchange)
             producer.publish(harvest_msg, routing_key="harvest.start.tumblr.tumblr_blog_posts")
 
-            # Now wait for result message.
-            counter = 0
-            bound_result_queue = self.result_queue(connection)
-            message_obj = None
-            while counter < 240 and not message_obj:
-                time.sleep(.5)
-                message_obj = bound_result_queue.get(no_ack=True)
-                counter += 1
-            self.assertTrue(message_obj, "Timed out waiting for result at {}.".format(datetime.now()))
+            # Now wait for status message.
+            status_msg = self._wait_for_message(self.result_queue, connection)
+            # Matching ids
+            self.assertEqual("test:2", status_msg["id"])
+            # Running
+            self.assertEqual(STATUS_RUNNING, status_msg["status"])
 
-            result_msg = message_obj.payload
+            # Another running message
+            status_msg = self._wait_for_message(self.result_queue, connection)
+            self.assertEqual(STATUS_RUNNING, status_msg["status"])
+
+            # Now wait for result message.
+            result_msg = self._wait_for_message(self.result_queue, connection)
             # Matching ids
             self.assertEqual("test:2", result_msg["id"])
             # Success
-            self.assertEqual("completed success", result_msg["status"])
+            self.assertEqual(STATUS_SUCCESS, result_msg["status"])
             # Some posts
             self.assertTrue(result_msg["stats"][date.today().isoformat()]["tumblr posts"])
 
             # Web harvest message.
-            bound_web_harvest_queue = self.web_harvest_queue(connection)
-            message_obj = bound_web_harvest_queue.get(no_ack=True)
-            # the default value is not harvesting web resources.
-            self.assertIsNotNone(message_obj, "No web harvest message.")
-            web_harvest_msg = message_obj.payload
+            web_harvest_msg = self._wait_for_message(self.web_harvest_queue, connection)
             self.assertTrue(len(web_harvest_msg["seeds"]))
 
             # Warc created message.
-            bound_warc_created_queue = self.warc_created_queue(connection)
-            message_obj = bound_warc_created_queue.get(no_ack=True)
-            self.assertIsNotNone(message_obj, "No warc created message.")
             # check path exist
-            warc_msg = message_obj.payload
+            warc_msg = self._wait_for_message(self.warc_created_queue, connection)
             self.assertTrue(os.path.isfile(warc_msg["warc"]["path"]))
+
+    def _wait_for_message(self, queue, connection):
+        counter = 0
+        message_obj = None
+        bound_result_queue = queue(connection)
+        while counter < 180 and not message_obj:
+            time.sleep(.5)
+            message_obj = bound_result_queue.get(no_ack=True)
+            counter += 1
+        self.assertIsNotNone(message_obj, "Timed out waiting for result at {}.".format(datetime.now()))
+        return message_obj.payload
