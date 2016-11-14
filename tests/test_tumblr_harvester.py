@@ -50,6 +50,9 @@ class TestTumblrHarvester(tests.TestCase):
             "collection_set": {
                 "id": "test_collection_set"
             },
+            "collection": {
+                "id": "test_collection"
+            },
             "options": {
                 "web_resources": True,
                 "sizes": ["Large"]
@@ -241,6 +244,9 @@ class TestTumblrHarvesterVCR(tests.TestCase):
             "collection_set": {
                 "id": "test_collection_set"
             },
+            "collection": {
+                "id": "test_collection"
+            },
             "options": {
             }
         }
@@ -333,7 +339,7 @@ class TestTumblrHarvesterIntegration(tests.TestCase):
     def tearDown(self):
         shutil.rmtree(self.harvest_path, ignore_errors=True)
 
-    def test_search(self):
+    def test_blog_posts(self):
         harvest_msg = {
             "id": "test:2",
             "type": "tumblr_blog_posts",
@@ -348,6 +354,9 @@ class TestTumblrHarvesterIntegration(tests.TestCase):
             },
             "collection_set": {
                 "id": "test_collection_set"
+            },
+            "collection": {
+                "id": "test_collection"
             },
             "options": {
                 "web_resources": True,
