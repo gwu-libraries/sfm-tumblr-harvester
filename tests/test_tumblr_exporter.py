@@ -105,6 +105,7 @@ class TestTumblrExporterVcr(tests.TestCase):
                 "id": "afe49fc673ab4380909e06f43b46a990"
             },
             "format": "csv",
+            "segment_size": None,
             "path": self.export_path
         }
 
@@ -112,7 +113,7 @@ class TestTumblrExporterVcr(tests.TestCase):
         self.exporter.on_message()
 
         self.assertTrue(self.exporter.result.success)
-        csv_filepath = os.path.join(self.export_path, "test1.csv")
+        csv_filepath = os.path.join(self.export_path, "test1_001.csv")
         self.assertTrue(os.path.exists(csv_filepath))
         with open(csv_filepath, "r") as f:
             lines = f.readlines()
@@ -126,18 +127,27 @@ class TestTumblrStatusTableVcr(tests.TestCase):
                                         "tumblr_demo.warc.gz"))
 
     def test_table(self):
-        table = TumblrStatusTable(self.warc_paths, False, None, None, None)
-        count = 0
-        for count, row in enumerate(table):
-            if count == 0:
-                # check the fields on the right way
-                self.assertEqual("created_at", row[0])
-                self.assertEqual("post_text", row[6])
-            if count == 2:
-                # testing the second row
-                self.assertEqual(147244283789, row[1])
-                self.assertEqual("Boxed Spirits: Franny Zooey and Everyman by Corcoran School Book "
-                                 "Arts professor Kerry McAleer-Keeler takes inspiration from J....", row[5])
-                self.assertEqual('https://tmblr.co/ZWQXzj298SNUD', row[9])
+        tables = TumblrStatusTable(self.warc_paths, False, None, None, None, segment_row_size=20)
+        chunk_count = total_count = 0
+        for idx, table in enumerate(tables):
+            chunk_count += 1
+            for count, row in enumerate(table):
+                total_count += 1
+                if count == 0:
+                    # check the fields on the right way
+                    self.assertEqual("created_at", row[0])
+                    self.assertEqual("post_text", row[6])
+                if idx == 0 and count == 2:
+                    # testing the second row
+                    self.assertEqual(147244283789, row[1])
+                    self.assertEqual("Boxed Spirits: Franny Zooey and Everyman by Corcoran School Book "
+                                     "Arts professor Kerry McAleer-Keeler takes inspiration from J....", row[5])
+                    self.assertEqual('https://tmblr.co/ZWQXzj298SNUD', row[9])
+                if idx == 2 and count == 5:
+                    # testing the third row
+                    self.assertEqual(139431003744, row[1])
+
+        self.assertEqual(3, chunk_count)
+        # 1+20,1+20,1+11
         # the demo has collect twice for the first post,so it's 50+1
-        self.assertEqual(51, count)
+        self.assertEqual(54, total_count)
