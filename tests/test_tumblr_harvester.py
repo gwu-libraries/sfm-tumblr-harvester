@@ -226,8 +226,6 @@ class TestTumblrHarvesterVCR(tests.TestCase):
         self.harvester = TumblrHarvester(self.working_path)
         self.harvester.state_store = DictHarvestStateStore()
         self.harvester.result = HarvestResult()
-        # self.harvester.stop_event = threading.Event()
-        # self.harvester.harvest_result_lock = threading.Lock()
         self.harvester.stop_harvest_seeds_event = threading.Event()
         self.harvester.message = {
             "id": "test:1",
@@ -334,12 +332,14 @@ class TestTumblrHarvesterIntegration(tests.TestCase):
             tumblr_harvester_queue(connection).declare()
             tumblr_harvester_queue(connection).purge()
 
-        self.harvest_path = tempfile.mkdtemp()
+        self.harvest_path = None
 
     def tearDown(self):
-        shutil.rmtree(self.harvest_path, ignore_errors=True)
+        if self.harvest_path:
+            shutil.rmtree(self.harvest_path, ignore_errors=True)
 
     def test_blog_posts(self):
+        self.path = "/sfm-data/collection_set/test_collection/test_2"
         harvest_msg = {
             "id": "test:2",
             "type": "tumblr_blog_posts",
