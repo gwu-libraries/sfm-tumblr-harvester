@@ -17,8 +17,9 @@ class TumblrStatusTable(BaseTable):
     Assume rows status for Tumblr posts
     """
 
-    def __init__(self, warc_paths, dedupe, item_date_start, item_date_end, seed_uids):
-        BaseTable.__init__(self, warc_paths, dedupe, item_date_start, item_date_end, seed_uids, TumblrWarcIter)
+    def __init__(self, warc_paths, dedupe, item_date_start, item_date_end, seed_uids, segment_row_size=None):
+        BaseTable.__init__(self, warc_paths, dedupe, item_date_start, item_date_end, seed_uids, TumblrWarcIter,
+                           segment_row_size)
 
     def _header_row(self):
         return ('created_at', 'tumblr_id', 'blog_name','post_type', 'post_slug',
