@@ -138,18 +138,43 @@ class TestTumblrHarvester(tests.TestCase):
         # State not set
         self.assertIsNone(self.harvester.state_store.get_state("tumblr_harvester", "peacecorps.since_post_id"))
 
+    # INFO:tumblr_harvester:147341360917 - text
+    # INFO:tumblr_harvester:147333929711 - video
+    # INFO:tumblr_harvester:147311989737 - photo
+
     @patch("tumblr_harvester.TumblrWarcIter", autospec=True)
     def test_process_incremental(self, iter_class):
         mock_iter = MagicMock(spec=TumblrWarcIter)
         mock_iter.__iter__.side_effect = [
-            self._iter_items([video_post, text_post, photo_post]).__iter__()]
+            self._iter_items([text_post, video_post, photo_post]).__iter__()]
         iter_class.side_effect = [mock_iter]
 
         # These are default harvest options
         self.harvester.extract_web_resources = False
         self.harvester.extract_media = False
         self.harvester.incremental = True
-        self.harvester.state_store.set_state("tumblr_harvester", "peacecorps.since_post_id", 147299875398)
+        self.harvester.state_store.set_state("tumblr_harvester", "peacecorps.since_post_id", 147333929711)
+
+        self.harvester.process_warc("test.warc.gz")
+        # The default will not sending web harvest
+        self.assertSetEqual(set(), self.harvester.result.urls_as_set())
+        iter_class.assert_called_once_with("test.warc.gz")
+        self.assertEqual(1, self.harvester.result.stats_summary()["tumblr posts"])
+        # State updated
+        self.assertEqual(147341360917,
+                         self.harvester.state_store.get_state("tumblr_harvester", "peacecorps.since_post_id"))
+
+    @patch("tumblr_harvester.TumblrWarcIter", autospec=True)
+    def test_process_first_incremental(self, iter_class):
+        mock_iter = MagicMock(spec=TumblrWarcIter)
+        mock_iter.__iter__.side_effect = [
+            self._iter_items([text_post, video_post, photo_post]).__iter__()]
+        iter_class.side_effect = [mock_iter]
+
+        # These are default harvest options
+        self.harvester.extract_web_resources = False
+        self.harvester.extract_media = False
+        self.harvester.incremental = True
 
         self.harvester.process_warc("test.warc.gz")
         # The default will not sending web harvest
@@ -159,6 +184,29 @@ class TestTumblrHarvester(tests.TestCase):
         # State updated
         self.assertEqual(147341360917,
                          self.harvester.state_store.get_state("tumblr_harvester", "peacecorps.since_post_id"))
+
+    @patch("tumblr_harvester.TumblrWarcIter", autospec=True)
+    def test_process_no_new_incremental(self, iter_class):
+        mock_iter = MagicMock(spec=TumblrWarcIter)
+        mock_iter.__iter__.side_effect = [
+            self._iter_items([text_post, video_post, photo_post]).__iter__()]
+        iter_class.side_effect = [mock_iter]
+
+        # These are default harvest options
+        self.harvester.extract_web_resources = False
+        self.harvester.extract_media = False
+        self.harvester.incremental = True
+        self.harvester.state_store.set_state("tumblr_harvester", "peacecorps.since_post_id", 147341360917)
+
+        self.harvester.process_warc("test.warc.gz")
+        # The default will not sending web harvest
+        self.assertSetEqual(set(), self.harvester.result.urls_as_set())
+        iter_class.assert_called_once_with("test.warc.gz")
+        self.assertEqual(0, self.harvester.result.stats_summary()["tumblr posts"])
+        # State updated
+        self.assertEqual(147341360917,
+                         self.harvester.state_store.get_state("tumblr_harvester", "peacecorps.since_post_id"))
+
 
     @patch("tumblr_harvester.TumblrWarcIter", autospec=True)
     def test_process_harvest_options_web(self, iter_class):

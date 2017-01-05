@@ -110,18 +110,34 @@ class TumblrHarvester(BaseHarvester):
         self.tumblrapi = Tumblrarc(self.message["credentials"]["api_key"])
 
     def process_warc(self, warc_filepath):
+        # Need to keep track of original since_post_ids
+        since_post_ids = {}
         for count, status in enumerate(TumblrWarcIter(warc_filepath)):
             post = status.item
+            # If not incremental, then use all posts.
+            # If incremental and this is the first run (there is no state),
+            # then set state to the first post, but use all posts.
+            # If incremental and this is not the first run (there is a state),
+            # then set the state to the first post, but only use posts that
+            # are greater than the original state.
             if not count % 25:
                 log.debug("Processing %s posts", count)
             if "id" in post:
-                self.result.increment_stats("tumblr posts")
-                if self.incremental:
-                    # Update state
+                post_id = post.get("id")
+                if not self.incremental:
+                    self.result.increment_stats("tumblr posts")
+                    self._process_options(post)
+                else:
                     key = u"{}.since_post_id".format(post["blog_name"])
-                    self.state_store.set_state(__name__, key,
-                                               max(self.state_store.get_state(__name__, key), post.get("id")))
-                self._process_options(post)
+                    since_post_id = self.state_store.get_state(__name__, key) or 0
+                    if key not in since_post_ids:
+                        since_post_ids[key] = since_post_id
+                    if post_id > since_post_id:
+                        # Update state
+                        self.state_store.set_state(__name__, key,  post_id)
+                    if post_id > since_post_ids[key]:
+                        self.result.increment_stats("tumblr posts")
+                        self._process_options(post)
 
     @staticmethod
     def _extract_html_links(text, tag_name, link_type):
