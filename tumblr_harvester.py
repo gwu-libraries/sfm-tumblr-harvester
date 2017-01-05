@@ -112,16 +112,19 @@ class TumblrHarvester(BaseHarvester):
     def process_warc(self, warc_filepath):
         for count, status in enumerate(TumblrWarcIter(warc_filepath)):
             post = status.item
+            key = u"{}.since_post_id".format(post["blog_name"])
+            since_post_id = self.state_store.get_state(__name__, key)
             if not count % 25:
                 log.debug("Processing %s posts", count)
             if "id" in post:
-                self.result.increment_stats("tumblr posts")
-                if self.incremental:
+                if not self.incremental:
+                    self.result.increment_stats("tumblr posts")
+                    self._process_options(post)
+                elif post.get("id") > since_post_id:
                     # Update state
-                    key = u"{}.since_post_id".format(post["blog_name"])
-                    self.state_store.set_state(__name__, key,
-                                               max(self.state_store.get_state(__name__, key), post.get("id")))
-                self._process_options(post)
+                    self.state_store.set_state(__name__, key,  post.get("id"))
+                    self.result.increment_stats("tumblr posts")
+                    self._process_options(post)
 
     @staticmethod
     def _extract_html_links(text, tag_name, link_type):

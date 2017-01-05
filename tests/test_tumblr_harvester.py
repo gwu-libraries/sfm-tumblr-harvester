@@ -149,13 +149,13 @@ class TestTumblrHarvester(tests.TestCase):
         self.harvester.extract_web_resources = False
         self.harvester.extract_media = False
         self.harvester.incremental = True
-        self.harvester.state_store.set_state("tumblr_harvester", "peacecorps.since_post_id", 147299875398)
+        self.harvester.state_store.set_state("tumblr_harvester", "peacecorps.since_post_id", 147333929711)
 
         self.harvester.process_warc("test.warc.gz")
         # The default will not sending web harvest
         self.assertSetEqual(set(), self.harvester.result.urls_as_set())
         iter_class.assert_called_once_with("test.warc.gz")
-        self.assertEqual(3, self.harvester.result.stats_summary()["tumblr posts"])
+        self.assertEqual(1, self.harvester.result.stats_summary()["tumblr posts"])
         # State updated
         self.assertEqual(147341360917,
                          self.harvester.state_store.get_state("tumblr_harvester", "peacecorps.since_post_id"))
