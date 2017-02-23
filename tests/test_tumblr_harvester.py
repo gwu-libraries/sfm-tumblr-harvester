@@ -41,7 +41,8 @@ class TestTumblrHarvester(tests.TestCase):
             "path": "/collections/test_collection_set/collection_id",
             "seeds": [
                 {
-                    "uid": "peacecorps"
+                    "uid": "peacecorps",
+                    "id": "seed1"
                 }
             ],
             "credentials": {
@@ -281,7 +282,9 @@ class TestTumblrHarvesterVCR(tests.TestCase):
             "path": "/collections/test_collection_set/collection_id",
             "seeds": [
                 {
-                    "uid": "codingjester"
+                    "uid": "codingjester",
+                    "id": "seed1"
+
                 }
             ],
             "credentials": {
@@ -394,7 +397,8 @@ class TestTumblrHarvesterIntegration(tests.TestCase):
             "path": self.harvest_path,
             "seeds": [
                 {
-                    "uid": "gwuscrc"
+                    "uid": "gwuscrc",
+                    "id": "seed1"
                 }
             ],
             "credentials": {
