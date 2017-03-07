@@ -39,11 +39,11 @@ class TumblrHarvester(BaseHarvester):
         self.extract_media = self.message.get("options", {}).get("media", False)
 
         for seed in self.message.get("seeds", []):
-            self._blog_post(seed.get("uid"), self.incremental)
+            self._blog_post(seed.get("uid"), seed["id"], self.incremental)
             if not self.result.success:
                 break
 
-    def _blog_post(self, blog_name, incremental):
+    def _blog_post(self, blog_name, seed_id, incremental):
         log.info(u"Harvesting blog %s. Incremental is %s.", blog_name, incremental)
         assert blog_name
         try:
@@ -56,7 +56,7 @@ class TumblrHarvester(BaseHarvester):
             if e.response.status_code == 404:
                 msg = "Blog hostname {} probably invalid".format(blog_name)
                 log.exception(msg)
-                self.result.warnings.append(Msg(CODE_TOKEN_NOT_FOUND, msg))
+                self.result.warnings.append(Msg(CODE_TOKEN_NOT_FOUND, msg, seed_id=seed_id))
             else:
                 raise e
 
