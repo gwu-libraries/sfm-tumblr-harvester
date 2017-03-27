@@ -125,7 +125,12 @@ def http_status_wraps(f):
                     resp.raise_for_status()
                 logging.warn("%s from request URL, sleeping 1s", resp.status_code)
                 time.sleep(1)
-
+            # add 429 response error, not sure whether it has the rate limit value
+            elif resp.status_code == 429:
+                # set the default wait to 300 seconds if no rate limit info in header
+                seconds = 300
+                logging.warn("API rate limit exceeded: sleeping %s secs", seconds)
+                time.sleep(seconds)
             # deal with the response error
             elif resp.status_code >= 500:
                 errors += 1
@@ -194,7 +199,6 @@ class Tumblrarc(object):
             post_url = u'{0}/posts'.format(blogname)
         else:
             post_url = u'{0}/posts/{1}'.format(blogname, type)
-
         # the request start position
         start_request = 0
         params = {'limit': MAX_POST_PER_PAGE, 'filter': format}
