@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     name='sfmtumblrharvester',
-    version='1.10.0',
+    version='1.11.0',
     url='https://github.com/gwu-libraries/sfm-tumblr-harvester',
     author='Vict Tan',
     author_email='ychtan@email.gwu.edu',
