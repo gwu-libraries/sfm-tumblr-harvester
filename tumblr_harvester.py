@@ -4,7 +4,6 @@ from sfmutils.harvester import BaseHarvester, Msg, CODE_TOKEN_NOT_FOUND
 from tumblrarc import Tumblrarc
 from tumblr_warc_iter import TumblrWarcIter
 from requests.exceptions import HTTPError
-from bs4 import BeautifulSoup
 
 log = logging.getLogger(__name__)
 
@@ -17,8 +16,6 @@ class TumblrHarvester(BaseHarvester):
         BaseHarvester.__init__(self, working_path, mq_config=mq_config, debug=debug,debug_warcprox=debug_warcprox,
                                tries=tries)
         self.tumblrapi = None
-        self.extract_web_resources = False
-        self.extract_media = False
         self.incremental = False
 
     def harvest_seeds(self):
@@ -33,10 +30,6 @@ class TumblrHarvester(BaseHarvester):
 
     def blog_posts(self):
         self.incremental = self.message.get("options", {}).get("incremental", False)
-
-        # Get harvest extract options.
-        self.extract_web_resources = self.message.get("options", {}).get("web_resources", False)
-        self.extract_media = self.message.get("options", {}).get("media", False)
 
         for seed in self.message.get("seeds", []):
             self._blog_post(seed.get("uid"), seed["id"], self.incremental)
@@ -71,41 +64,6 @@ class TumblrHarvester(BaseHarvester):
             if 'id' in post:
                 self.result.harvest_counter['tumblr posts'] += 1
 
-    def _process_options(self, post):
-        """
-        source_url for chat photo video audio,'url' for link
-        :param post:
-        :return:
-        """
-        if self.extract_web_resources:
-            # link type url
-            if 'url' in post:
-                self.result.urls.append(post['url'])
-            # the source url, for audio type, some of has this field
-            # using audio_url instead when type is audio
-            elif 'source_url' in post and post['type'] != 'audio':
-                self.result.urls.append(post['source_url'])
-            # audio url
-            elif 'audio_url' in post:
-                self.result.urls.append(post['audio_url'])
-            # video youtube
-            elif 'permalink_url' in post:
-                self.result.urls.append(post['permalink_url'])
-            # directly video url
-            elif 'video_url' in post:
-                self.result.urls.append(post['video_url'])
-            # extract url from text type
-            elif 'body' in post:
-                self.result.urls.extend(self._extract_html_links(post['body'], 'a', 'href'))
-
-        if self.extract_media:
-            if 'photos' in post:
-                for ph in post['photos']:
-                    self.result.urls.append(ph['original_size']['url'])
-            # extract img from text type
-            elif 'body' in post:
-                self.result.urls.extend(self._extract_html_links(post['body'], 'img', 'src'))
-
     def _create_tumblrarc(self):
         self.tumblrapi = Tumblrarc(self.message["credentials"]["api_key"])
 
@@ -126,7 +84,6 @@ class TumblrHarvester(BaseHarvester):
                 post_id = post.get("id")
                 if not self.incremental:
                     self.result.increment_stats("tumblr posts")
-                    self._process_options(post)
                 else:
                     key = u"{}.since_post_id".format(post["blog_name"])
                     since_post_id = self.state_store.get_state(__name__, key) or 0
@@ -137,19 +94,6 @@ class TumblrHarvester(BaseHarvester):
                         self.state_store.set_state(__name__, key,  post_id)
                     if post_id > since_post_ids[key]:
                         self.result.increment_stats("tumblr posts")
-                        self._process_options(post)
-
-    @staticmethod
-    def _extract_html_links(text, tag_name, link_type):
-        link_lists = []
-        if not text:
-            return link_lists
-        param = {link_type: True}
-        soup = BeautifulSoup(text, "html.parser")
-        for link in soup.find_all(tag_name, **param):
-            # get rid of the \" and \" at the beginning and end
-            link_lists.append(link[link_type])
-        return link_lists
 
 
 if __name__ == "__main__":
