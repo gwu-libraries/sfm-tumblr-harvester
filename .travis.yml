@@ -1,6 +1,6 @@
 language: python
 python:
-- '2.7'
+- '3.6'
 sudo: required
 services:
 - docker
@@ -15,6 +15,6 @@ install: pip install -r requirements/common.txt -r requirements/master.txt
 script: python -m unittest discover
 notifications:
   email:
-  - ychtan@email.gwu.edu
+  - sfm@gwu.edu
   slack:
     on_success: never

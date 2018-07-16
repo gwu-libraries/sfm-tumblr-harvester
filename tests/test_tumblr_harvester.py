@@ -190,6 +190,7 @@ class TestTumblrHarvester(tests.TestCase):
         self.assertEqual(147341360917,
                          self.harvester.state_store.get_state("tumblr_harvester", "peacecorps.since_post_id"))
 
+
 @unittest.skipIf(not tests.test_config_available, "Skipping test since test config not available.")
 class TestTumblrHarvesterVCR(tests.TestCase):
     def setUp(self):

@@ -52,7 +52,7 @@ def main():
 
     if not api_key:
         print("Please enter Tumblr authentication credentials")
-        api_key = raw_input('API key: ')
+        api_key = input('API key: ')
 
     tb = Tumblrarc(api_key=api_key)
 
@@ -79,7 +79,7 @@ def main():
         if "id" in post:
             logging.info("archived %s", post['post_url'])
         else:
-            logging.warn(json.dumps(post))
+            logging.warning(json.dumps(post))
 
 
 def conn_reset_wraps(f):
@@ -97,7 +97,7 @@ def conn_reset_wraps(f):
         try:
             return f(self, *args, **kwargs)
         except ConnectionError as e:
-            logging.warn("caught connection error: %s", e)
+            logging.warning("caught connection error: %s", e)
             self.connect()
             return f(self, *args, **kwargs)
 
@@ -119,26 +119,26 @@ def http_status_wraps(f):
                 return resp
             elif resp.status_code == 404:
                 errors += 1
-                logging.warn("404:Not found url! Sleep 1s to try again...")
+                logging.warning("404:Not found url! Sleep 1s to try again...")
                 if errors > MAX_TRIES_404:
-                    logging.warn("Too many errors 404, stop!")
+                    logging.warning("Too many errors 404, stop!")
                     resp.raise_for_status()
-                logging.warn("%s from request URL, sleeping 1s", resp.status_code)
+                logging.warning("%s from request URL, sleeping 1s", resp.status_code)
                 time.sleep(1)
             # add 429 response error, not sure whether it has the rate limit value
             elif resp.status_code == 429:
                 # set the default wait to 300 seconds if no rate limit info in header
                 seconds = 300
-                logging.warn("API rate limit exceeded: sleeping %s secs", seconds)
+                logging.warning("API rate limit exceeded: sleeping %s secs", seconds)
                 time.sleep(seconds)
             # deal with the response error
             elif resp.status_code >= 500:
                 errors += 1
                 if errors > MAX_TRIES_500:
-                    logging.warn("Too many errors from Tumblr REST API Server, stop!")
+                    logging.warning("Too many errors from Tumblr REST API Server, stop!")
                     resp.raise_for_status()
                 seconds = 60 * errors
-                logging.warn("%s from Tumblr REST API Server, sleeping %d", resp.status_code, seconds)
+                logging.warning("%s from Tumblr REST API Server, sleeping %d", resp.status_code, seconds)
                 time.sleep(seconds)
             else:
                 resp.raise_for_status()
@@ -250,7 +250,8 @@ class Tumblrarc(object):
         logging.info("creating http session")
         self.client = Client(api_key=self.api_key)
 
-    def _lower_bound(self, posts, max_post_id):
+    @staticmethod
+    def _lower_bound(posts, max_post_id):
         """
         Finding the lower bound of the position to insert the max post id
         for i<left posts[low]['id']>max_post_id
@@ -260,14 +261,15 @@ class Tumblrarc(object):
         """
         left, right = 0, len(posts) - 1
         while left <= right:
-            mid = (left + right) / 2
+            mid = int((left + right) / 2)
             if posts[mid]['id'] >= max_post_id:
                 left = mid + 1
             else:
                 right = mid - 1
         return left
 
-    def _upper_bound(self, posts, since_post_id):
+    @staticmethod
+    def _upper_bound(posts, since_post_id):
         """
         Finding the upper bound of the position to insert the since post id
         for i>right posts[high]['id']<since_post_id
@@ -277,7 +279,7 @@ class Tumblrarc(object):
         """
         left, right = 0, len(posts) - 1
         while left <= right:
-            mid = (left + right) / 2
+            mid = int((left + right) / 2)
             if posts[mid]['id'] > since_post_id:
                 left = mid + 1
             else:

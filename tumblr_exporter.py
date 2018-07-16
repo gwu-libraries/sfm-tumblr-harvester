@@ -1,7 +1,7 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-from sfmutils.exporter import ExportResult, BaseExporter, BaseTable
+from sfmutils.exporter import BaseExporter, BaseTable
 from tumblr_warc_iter import TumblrWarcIter
 import logging
 from dateutil.parser import parse as date_parse
@@ -22,7 +22,7 @@ class TumblrStatusTable(BaseTable):
                            segment_row_size)
 
     def _header_row(self):
-        return ('created_at', 'tumblr_id', 'blog_name','post_type', 'post_slug',
+        return ('created_at', 'tumblr_id', 'blog_name', 'post_type', 'post_slug',
                 'post_summary', 'post_text', 'tags', 'tumblr_url', 'tumblr_short_url')
 
     def _row(self, item):
@@ -42,7 +42,8 @@ class TumblrStatusTable(BaseTable):
     def id_field(self):
         return "tumblr_id"
 
-    def _item_content(self, item):
+    @staticmethod
+    def _item_content(item):
         """
         To extract the main text in one item since different type has different field
         """

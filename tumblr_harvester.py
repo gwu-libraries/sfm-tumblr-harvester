@@ -13,7 +13,7 @@ USER_POSTS_ROUTING_KEY = "harvest.start.tumblr.tumblr_blog_posts"
 
 class TumblrHarvester(BaseHarvester):
     def __init__(self, working_path, mq_config=None, debug=False, debug_warcprox=False, tries=3):
-        BaseHarvester.__init__(self, working_path, mq_config=mq_config, debug=debug,debug_warcprox=debug_warcprox,
+        BaseHarvester.__init__(self, working_path, mq_config=mq_config, debug=debug, debug_warcprox=debug_warcprox,
                                tries=tries)
         self.tumblrapi = None
         self.incremental = False
