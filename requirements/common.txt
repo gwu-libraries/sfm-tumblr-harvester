@@ -1,6 +1,6 @@
 python-dateutil==2.7.5
-pytz==2018.7
-requests==2.21.0
+pytz==2019.1
+requests==2.22.0
 
 # Testing
 mock==2.0.0
