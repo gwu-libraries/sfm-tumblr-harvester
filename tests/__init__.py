@@ -4,7 +4,7 @@ import os
 import socket
 
 try:
-    from test_config import *
+    from .test_config import *
 except ImportError:
     TUMBLR_API_KEY = os.environ.get("TUMBLR_API_KEY")
 
