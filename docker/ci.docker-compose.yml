@@ -15,7 +15,10 @@ services:
           - SFM_UID=900
           - SFM_GID=900
   tumblrharvester:
-      image: gwul/sfm-tumblr-harvester:master
+#      image: gwul/sfm-tumblr-harvester:master
+      build:
+          context: ..
+          dockerfile: Dockerfile-harvester
       links:
           - rabbit:mq
       volumes:
