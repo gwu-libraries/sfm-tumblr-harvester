@@ -309,7 +309,7 @@ class TestTumblrHarvesterIntegration(tests.TestCase):
             shutil.rmtree(self.harvest_path, ignore_errors=True)
 
     def test_blog_posts(self):
-        self.harvest_path = "/sfm-data/collection_set/test_collection/test_2"
+        self.harvest_path = "/sfm-collection-set-data/collection_set/test_collection/test_2"
         harvest_msg = {
             "id": "test:2",
             "type": "tumblr_blog_posts",
