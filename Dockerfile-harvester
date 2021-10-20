@@ -1,4 +1,3 @@
-#FROM gwul/sfm-base@sha256:e68cb98bdc9dc23bbed734f3e507a0ffb866b007dffea038b6af8d88a62150e6
 # Python 3.8.12:buster
 FROM gwul/sfm-base@sha256:0b80a3d3562cdb4d631fbb55b9bd24889312838cbd27cd33e14cc0c18405f007
 MAINTAINER Social Feed Manager <sfm@gwu.edu>
