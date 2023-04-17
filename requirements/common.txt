@@ -1,5 +1,5 @@
 python-dateutil==2.7.5
-pytz==2019.3
+pytz==2022.1
 requests==2.22.0
 
 # Testing
